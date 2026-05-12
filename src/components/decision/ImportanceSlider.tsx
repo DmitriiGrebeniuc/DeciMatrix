@@ -31,6 +31,7 @@ export function ImportanceSlider({
         minimumTrackTintColor={COLORS.accent}
         maximumTrackTintColor={COLORS.border}
         thumbTintColor={COLORS.accent}
+        style={styles.slider}
       />
       <View style={styles.scaleLabels}>
         <Text style={styles.scaleText}>мало важно</Text>
@@ -51,8 +52,12 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   valueLabel: {
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '700',
     color: COLORS.textSecondary,
+  },
+  slider: {
+    minHeight: 44,
   },
   scaleLabels: {
     flexDirection: 'row',

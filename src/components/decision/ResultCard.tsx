@@ -20,7 +20,9 @@ export function ResultCard({
       <View style={styles.container}>
         <Text style={styles.label}>Лучший вариант</Text>
         <Text style={styles.title}>{winnerName}</Text>
-        <Text style={styles.percent}>{formatPercent(matchPercent)}</Text>
+        <View style={styles.percentPill}>
+          <Text style={styles.percent}>{formatPercent(matchPercent)}</Text>
+        </View>
         <Text style={styles.explanation}>{explanation}</Text>
       </View>
     </Card>
@@ -36,14 +38,21 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
     color: COLORS.textPrimary,
   },
+  percentPill: {
+    alignSelf: 'flex-start',
+    borderRadius: 16,
+    backgroundColor: COLORS.accentLight,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
   percent: {
-    fontSize: 34,
+    fontSize: 32,
     fontWeight: '800',
-    color: COLORS.accent,
+    color: COLORS.accentDark,
   },
   explanation: {
     fontSize: 15,

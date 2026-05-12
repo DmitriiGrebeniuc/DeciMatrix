@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 20,
+    borderRadius: 18,
     padding: 16,
     backgroundColor: COLORS.surface,
     shadowColor: COLORS.textPrimary,
@@ -41,6 +41,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   pressed: {
-    opacity: 0.9,
+    transform: [{ scale: 0.995 }],
+    opacity: 0.92,
   },
 });

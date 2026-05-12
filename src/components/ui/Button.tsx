@@ -42,7 +42,9 @@ export function Button({
           style={[
             styles.title,
             variant === 'secondary' && styles.secondaryTitle,
+            isDisabled && styles.disabledTitle,
           ]}
+          numberOfLines={1}
         >
           {title}
         </Text>
@@ -53,10 +55,10 @@ export function Button({
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 54,
+    minHeight: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 18,
+    borderRadius: 16,
     paddingHorizontal: 20,
     paddingVertical: 14,
   },
@@ -72,10 +74,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.danger,
   },
   disabled: {
-    opacity: 0.45,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.muted,
   },
   pressed: {
-    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
+    opacity: 0.9,
   },
   title: {
     fontSize: 16,
@@ -84,5 +88,8 @@ const styles = StyleSheet.create({
   },
   secondaryTitle: {
     color: COLORS.textPrimary,
+  },
+  disabledTitle: {
+    color: COLORS.textSecondary,
   },
 });

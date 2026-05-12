@@ -21,7 +21,7 @@ export function RankingList({ results, options }: RankingListProps) {
         <Card key={result.optionId}>
           <View style={styles.row}>
             <Text style={styles.rank}>{result.rank}</Text>
-            <Text style={styles.name}>
+            <Text style={styles.name} numberOfLines={2}>
               {getOptionName(options, result.optionId)}
             </Text>
             <Text style={styles.percent}>

@@ -30,6 +30,7 @@ export function TextInput({
         placeholder={placeholder}
         placeholderTextColor={COLORS.textSecondary}
         multiline={multiline}
+        returnKeyType={multiline ? 'default' : 'done'}
         textAlignVertical={multiline ? 'top' : 'center'}
         style={[
           styles.input,
