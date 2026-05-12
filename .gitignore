@@ -57,3 +57,6 @@ coverage/
 
 # EAS
 .eas/
+
+*.log
+.expo-web.*.log
