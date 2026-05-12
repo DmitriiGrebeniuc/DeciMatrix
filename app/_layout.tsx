@@ -1,8 +1,26 @@
 import { Stack } from 'expo-router';
+import { useEffect, useState } from 'react';
 
+import { BrandedLoadingScreen } from '../src/components/ui/BrandedLoadingScreen';
 import { ToastProvider } from '../src/components/ui/Toast';
 
 export default function RootLayout() {
+  const [isLoadingVisible, setIsLoadingVisible] = useState(true);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setIsLoadingVisible(false);
+    }, 1100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
+  if (isLoadingVisible) {
+    return <BrandedLoadingScreen />;
+  }
+
   return (
     <ToastProvider>
       <Stack screenOptions={{ headerShown: false }}>
