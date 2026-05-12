@@ -138,7 +138,9 @@ export default function RateOptionsScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.progressText}>
-            {pairs.length > 0 ? `${currentIndex + 1} из ${pairs.length}` : '0 из 0'}
+            {pairs.length > 0
+              ? `Оценка ${currentIndex + 1} из ${pairs.length}`
+              : 'Оценка 0 из 0'}
           </Text>
           <ProgressBar progress={progress} />
         </View>
@@ -167,7 +169,7 @@ export default function RateOptionsScreen() {
               </Text>
 
               <Text style={styles.question}>
-                Насколько этот вариант хорош по этому критерию?
+                Как этот вариант справляется с критерием?
               </Text>
 
               <RatingScale
@@ -184,7 +186,7 @@ export default function RateOptionsScreen() {
 
               {currentScore ? (
                 <Text style={styles.selectedText}>
-                  Выбрано: {RATING_LABELS[currentScore.rating]}
+                  Твоя оценка: {RATING_LABELS[currentScore.rating]}
                 </Text>
               ) : null}
             </View>

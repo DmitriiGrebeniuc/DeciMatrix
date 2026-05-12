@@ -9,11 +9,11 @@ export const RATING_VALUES: Record<RatingLevel, number> = {
 };
 
 export const RATING_LABELS: Record<RatingLevel, string> = {
-  bad: 'плохо',
-  weak: 'слабовато',
-  normal: 'нормально',
-  good: 'хорошо',
-  excellent: 'отлично',
+  bad: 'Плохо',
+  weak: 'Слабовато',
+  normal: 'Нормально',
+  good: 'Хорошо',
+  excellent: 'Отлично',
 };
 
 export const RATING_LEVELS: RatingLevel[] = [

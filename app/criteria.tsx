@@ -111,7 +111,7 @@ export default function AddCriteriaScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Что важно при выборе?</Text>
           <Text style={styles.hint}>
-            Добавь критерии, по которым будем сравнивать варианты.
+            Критерии - это то, что влияет на твой выбор.
           </Text>
         </View>
 
@@ -123,7 +123,7 @@ export default function AddCriteriaScreen() {
                 setCriterionName(value);
                 setError(undefined);
               }}
-              placeholder="Добавь критерий"
+              placeholder="Например: Цена"
               error={error}
             />
           </View>

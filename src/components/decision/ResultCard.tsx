@@ -18,7 +18,7 @@ export function ResultCard({
   return (
     <Card>
       <View style={styles.container}>
-        <Text style={styles.label}>Лучший вариант</Text>
+        <Text style={styles.label}>Лучше всего подходит</Text>
         <Text style={styles.title}>{winnerName}</Text>
         <View style={styles.percentPill}>
           <Text style={styles.percent}>{formatPercent(matchPercent)}</Text>

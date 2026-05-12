@@ -45,7 +45,7 @@ export default function CreateDecisionScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Что ты хочешь решить?</Text>
           <Text style={styles.hint}>
-            Сформулируй выбор как вопрос. Так результат будет понятнее.
+            Напиши выбор простым вопросом - так результат будет понятнее.
           </Text>
         </View>
 
@@ -58,7 +58,7 @@ export default function CreateDecisionScreen() {
           <TextInput
             value={description}
             onChangeText={setDescription}
-            placeholder="Короткое описание, необязательно"
+            placeholder="Описание, если нужно"
             multiline
           />
         </View>

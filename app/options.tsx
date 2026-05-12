@@ -93,7 +93,9 @@ export default function AddOptionsScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Между чем выбираем?</Text>
-          <Text style={styles.hint}>Добавь минимум два варианта.</Text>
+          <Text style={styles.hint}>
+            Добавь варианты, между которыми выбираешь.
+          </Text>
         </View>
 
         <View style={styles.addRow}>
@@ -104,7 +106,7 @@ export default function AddOptionsScreen() {
                 setOptionName(value);
                 setError(undefined);
               }}
-              placeholder="Добавь вариант"
+              placeholder="Например: MacBook Air M4"
               error={error}
             />
           </View>

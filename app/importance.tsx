@@ -63,7 +63,7 @@ export default function SetImportanceScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Насколько это важно?</Text>
           <Text style={styles.hint}>
-            Двигай слайдеры. Проценты мы посчитаем сами.
+            Покажи, что важнее. Проценты мы посчитаем сами.
           </Text>
         </View>
 

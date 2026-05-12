@@ -96,7 +96,7 @@ export default function ResultScreen() {
   return (
     <ScreenContainer scroll>
       <View style={styles.container}>
-        <Text style={styles.title}>Лучший вариант</Text>
+        <Text style={styles.title}>Лучше всего подходит</Text>
 
         {!decision ? (
           <Card>
@@ -112,8 +112,8 @@ export default function ResultScreen() {
           <Card>
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>
-                Осталось оценить {missingScoresCount} пунктов, чтобы показать
-                результат.
+                Осталось оценить {missingScoresCount} пунктов - и можно будет
+                показать результат.
               </Text>
               <Button title="Продолжить оценку" onPress={openRatings} />
             </View>
@@ -127,11 +127,12 @@ export default function ResultScreen() {
             />
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Рейтинг вариантов</Text>
+              <Text style={styles.sectionTitle}>Рейтинг</Text>
               <RankingList results={result.options} options={decision.options} />
             </View>
 
             <View style={styles.actions}>
+              <Button title="Сохранить" onPress={handleSave} />
               <Button
                 title="Изменить оценки"
                 variant="secondary"
@@ -142,7 +143,6 @@ export default function ResultScreen() {
                 variant="secondary"
                 onPress={openImportance}
               />
-              <Button title="Сохранить" onPress={handleSave} />
               <Button
                 title="На главную"
                 variant="secondary"

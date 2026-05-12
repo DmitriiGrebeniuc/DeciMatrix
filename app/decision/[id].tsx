@@ -138,7 +138,9 @@ export default function DecisionDetailsScreen() {
                 <Text style={styles.badgeText}>Черновик</Text>
               </View>
             </View>
-            <Text style={styles.subtitle}>Решение еще не завершено.</Text>
+            <Text style={styles.subtitle}>
+              Ты начал это решение, но еще не дошел до результата.
+            </Text>
           </View>
 
           <Button title="Продолжить" onPress={handleContinueDraft} />
@@ -148,7 +150,7 @@ export default function DecisionDetailsScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>{decision.title}</Text>
             <Text style={styles.subtitle}>
-              Победитель: {winnerName ?? 'результат пока нельзя рассчитать'}
+              Лучший вариант: {winnerName ?? 'результат пока нельзя рассчитать'}
             </Text>
           </View>
 

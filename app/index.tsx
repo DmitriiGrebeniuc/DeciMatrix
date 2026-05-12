@@ -13,7 +13,7 @@ import type { Decision } from '../src/types/decision';
 import { formatDecisionDate } from '../src/utils/dates';
 
 const TAGLINE =
-  'Сравни варианты спокойно и выбери лучший по тому, что действительно важно.';
+  'Разложи выбор по полочкам и посмотри, какой вариант подходит лучше.';
 
 function getWinnerName(decision: Decision): string | null {
   if (!canShowResult(decision)) {
@@ -63,10 +63,10 @@ export default function HomeScreen() {
         {decisions.length === 0 ? (
           <Card>
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>Решений пока нет</Text>
+              <Text style={styles.emptyTitle}>Пока здесь пусто</Text>
               <Text style={styles.emptyText}>
-                Создай первое решение, добавь варианты и критерии, а затем
-                сравни их по понятной шкале.
+                Создай первое решение - добавь варианты, критерии и получи
+                понятный результат.
               </Text>
             </View>
           </Card>
@@ -97,7 +97,7 @@ export default function HomeScreen() {
                       <View style={styles.cardMeta}>
                         {winnerName ? (
                           <Text style={styles.winner}>
-                            Победитель: {winnerName}
+                            Лучший вариант: {winnerName}
                           </Text>
                         ) : (
                           <Text style={styles.muted}>
