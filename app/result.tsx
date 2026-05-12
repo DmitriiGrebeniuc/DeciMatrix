@@ -4,9 +4,11 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { RankingList } from '../src/components/decision/RankingList';
 import { ResultCard } from '../src/components/decision/ResultCard';
+import { AppHeader } from '../src/components/ui/AppHeader';
 import { Button } from '../src/components/ui/Button';
 import { Card } from '../src/components/ui/Card';
 import { ScreenContainer } from '../src/components/ui/ScreenContainer';
+import { useToast } from '../src/components/ui/Toast';
 import { COLORS } from '../src/constants/colors';
 import {
   calculateDecisionResult,
@@ -20,6 +22,7 @@ import { useDecisionStore } from '../src/store/decisionStore';
 
 export default function ResultScreen() {
   const router = useRouter();
+  const { showToast } = useToast();
   const params = useLocalSearchParams<{ decisionId?: string }>();
   const decisions = useDecisionStore((state) => state.decisions);
   const currentDecisionId = useDecisionStore(
@@ -86,15 +89,18 @@ export default function ResultScreen() {
 
   function handleSave(): void {
     if (!decisionId) {
+      showToast('Не получилось сохранить решение', 'error');
       return;
     }
 
     completeDecision(decisionId);
+    showToast('Решение сохранено', 'success');
     router.push(`/decision/${decisionId}`);
   }
 
   return (
     <ScreenContainer scroll>
+      <AppHeader title="Результат" />
       <View style={styles.container}>
         <Text style={styles.title}>Лучше всего подходит</Text>
 

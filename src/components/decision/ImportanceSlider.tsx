@@ -20,7 +20,6 @@ export function ImportanceSlider({
     <Card>
       <View style={styles.header}>
         <Text style={styles.label}>{label}</Text>
-        <Text style={styles.valueLabel}>{getImportanceLabel(value)}</Text>
       </View>
       <Slider
         minimumValue={1}
@@ -33,6 +32,7 @@ export function ImportanceSlider({
         thumbTintColor={COLORS.accent}
         style={styles.slider}
       />
+      <Text style={styles.valueLabel}>{getImportanceLabel(value)}</Text>
       <View style={styles.scaleLabels}>
         <Text style={styles.scaleText}>мало важно</Text>
         <Text style={styles.scaleText}>критично</Text>
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   valueLabel: {
     fontSize: 15,
     fontWeight: '700',
-    color: COLORS.textSecondary,
+    color: COLORS.accentDark,
   },
   slider: {
     minHeight: 44,

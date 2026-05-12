@@ -53,14 +53,14 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 22,
     paddingTop: 20,
     paddingBottom: 28,
     backgroundColor: COLORS.background,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 22,
     paddingTop: 20,
     paddingBottom: 32,
     backgroundColor: COLORS.background,

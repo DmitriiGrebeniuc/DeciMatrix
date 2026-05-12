@@ -2,7 +2,6 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '../../constants/colors';
 import { formatPercent } from '../../utils/formatting';
-import { Card } from '../ui/Card';
 
 type ResultCardProps = {
   winnerName: string;
@@ -16,47 +15,51 @@ export function ResultCard({
   explanation,
 }: ResultCardProps) {
   return (
-    <Card>
-      <View style={styles.container}>
-        <Text style={styles.label}>Лучше всего подходит</Text>
-        <Text style={styles.title}>{winnerName}</Text>
-        <View style={styles.percentPill}>
-          <Text style={styles.percent}>{formatPercent(matchPercent)}</Text>
-        </View>
-        <Text style={styles.explanation}>{explanation}</Text>
+    <View style={styles.container}>
+      <Text style={styles.label}>Лучше всего подходит</Text>
+      <Text style={styles.title}>{winnerName}</Text>
+      <View style={styles.percentPill}>
+        <Text style={styles.percent}>{formatPercent(matchPercent)} совпадения</Text>
       </View>
-    </Card>
+      <Text style={styles.explanation}>{explanation}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    gap: 8,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: COLORS.accentLight,
+    borderRadius: 24,
+    padding: 20,
+    backgroundColor: COLORS.accentVeryLight,
   },
   label: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    fontWeight: '800',
+    color: COLORS.accentDark,
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800',
     color: COLORS.textPrimary,
   },
   percentPill: {
     alignSelf: 'flex-start',
     borderRadius: 16,
-    backgroundColor: COLORS.accentLight,
+    backgroundColor: COLORS.surface,
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
   percent: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: '800',
     color: COLORS.accentDark,
   },
   explanation: {
     fontSize: 15,
     lineHeight: 21,
-    color: COLORS.textSecondary,
+    color: COLORS.textPrimary,
   },
 });

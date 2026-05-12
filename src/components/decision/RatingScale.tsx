@@ -24,35 +24,24 @@ export function RatingScale({ value, onChange }: RatingScaleProps) {
         const isSelected = value === rating;
 
         return (
-          <Pressable
-            accessibilityRole="button"
-            key={rating}
-            onPress={() => onChange(rating)}
-            style={[
-              styles.segment,
-              { borderColor: isSelected ? RATING_COLORS[rating] : COLORS.border },
-              isSelected && styles.selectedSegment,
-            ]}
-          >
-            <View
-              style={[
-                styles.colorMark,
+          <View key={rating} style={styles.item}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onChange(rating)}
+              style={({ pressed }) => [
+                styles.segment,
                 { backgroundColor: RATING_COLORS[rating] },
+                isSelected && styles.selectedSegment,
+                pressed && styles.pressedSegment,
               ]}
             />
             <Text
-              style={[
-                styles.label,
-                isSelected && styles.selectedLabel,
-              ]}
+              style={[styles.label, isSelected && styles.selectedLabel]}
               numberOfLines={1}
             >
               {RATING_LABELS[rating]}
             </Text>
-            <Text style={[styles.check, !isSelected && styles.hiddenCheck]}>
-              ✓
-            </Text>
-          </Pressable>
+          </View>
         );
       })}
     </View>
@@ -61,45 +50,46 @@ export function RatingScale({ value, onChange }: RatingScaleProps) {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+  },
+  item: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+    gap: 7,
   },
   segment: {
-    minHeight: 46,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
+    width: '100%',
+    height: 48,
     borderWidth: 2,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: COLORS.surface,
+    borderColor: 'transparent',
+    borderRadius: 10,
   },
   selectedSegment: {
-    backgroundColor: COLORS.accentLight,
+    borderColor: COLORS.accentDark,
+    transform: [{ scale: 1.07 }],
+    shadowColor: COLORS.accentDark,
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 4,
   },
-  colorMark: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+  pressedSegment: {
+    opacity: 0.88,
   },
   label: {
-    flex: 1,
-    fontSize: 15,
+    maxWidth: '100%',
+    fontSize: 9,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: COLORS.textMuted,
   },
   selectedLabel: {
-    color: COLORS.textPrimary,
-  },
-  check: {
-    width: 18,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '800',
     color: COLORS.accentDark,
-  },
-  hiddenCheck: {
-    opacity: 0,
+    fontWeight: '900',
   },
 });

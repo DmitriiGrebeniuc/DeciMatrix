@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { ImportanceSlider } from '../src/components/decision/ImportanceSlider';
 import { Button } from '../src/components/ui/Button';
+import { AppHeader } from '../src/components/ui/AppHeader';
 import { Card } from '../src/components/ui/Card';
 import { ScreenContainer } from '../src/components/ui/ScreenContainer';
 import { COLORS } from '../src/constants/colors';
@@ -59,6 +60,7 @@ export default function SetImportanceScreen() {
 
   return (
     <ScreenContainer scroll>
+      <AppHeader title="Важность" />
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Насколько это важно?</Text>

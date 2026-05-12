@@ -28,17 +28,17 @@ const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 22,
+    padding: 18,
     backgroundColor: COLORS.surface,
     shadowColor: COLORS.textPrimary,
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 2,
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 1,
   },
   pressed: {
     transform: [{ scale: 0.995 }],

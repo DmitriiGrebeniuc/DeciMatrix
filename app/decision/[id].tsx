@@ -1,11 +1,14 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { RankingList } from '../../src/components/decision/RankingList';
+import { AppHeader } from '../../src/components/ui/AppHeader';
 import { Button } from '../../src/components/ui/Button';
 import { Card } from '../../src/components/ui/Card';
+import { ConfirmModal } from '../../src/components/ui/ConfirmModal';
 import { ScreenContainer } from '../../src/components/ui/ScreenContainer';
+import { useToast } from '../../src/components/ui/Toast';
 import { COLORS } from '../../src/constants/colors';
 import { calculateDecisionResult } from '../../src/services/decisionCalculator';
 import {
@@ -15,7 +18,9 @@ import {
 import { useDecisionStore } from '../../src/store/decisionStore';
 import type { Decision } from '../../src/types/decision';
 
-function getDraftNextPath(decision: Decision): '/options' | '/criteria' | '/ratings' | '/result' {
+function getDraftNextPath(
+  decision: Decision
+): '/options' | '/criteria' | '/ratings' | '/result' {
   if (decision.options.length < 2) {
     return '/options';
   }
@@ -33,6 +38,7 @@ function getDraftNextPath(decision: Decision): '/options' | '/criteria' | '/rati
 
 export default function DecisionDetailsScreen() {
   const router = useRouter();
+  const { showToast } = useToast();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const decisions = useDecisionStore((state) => state.decisions);
   const isLoaded = useDecisionStore((state) => state.isLoaded);
@@ -41,6 +47,7 @@ export default function DecisionDetailsScreen() {
     (state) => state.setCurrentDecision
   );
   const deleteDecision = useDecisionStore((state) => state.deleteDecision);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
   const decision = useMemo(
     () => decisions.find((item) => item.id === id),
@@ -71,7 +78,9 @@ export default function DecisionDetailsScreen() {
     }
   }, [id, setCurrentDecision]);
 
-  function openStep(pathname: '/options' | '/criteria' | '/importance' | '/ratings' | '/result'): void {
+  function openStep(
+    pathname: '/options' | '/criteria' | '/importance' | '/ratings' | '/result'
+  ): void {
     if (!id) {
       return;
     }
@@ -92,33 +101,20 @@ export default function DecisionDetailsScreen() {
     openStep(getDraftNextPath(decision));
   }
 
-  function confirmDelete(): void {
+  function handleDelete(): void {
     if (!id) {
       return;
     }
 
-    Alert.alert(
-      'Удалить решение?',
-      'Это действие нельзя отменить.',
-      [
-        {
-          text: 'Отмена',
-          style: 'cancel',
-        },
-        {
-          text: 'Удалить',
-          style: 'destructive',
-          onPress: () => {
-            deleteDecision(id);
-            router.push('/');
-          },
-        },
-      ]
-    );
+    deleteDecision(id);
+    setIsDeleteModalVisible(false);
+    showToast('Решение удалено', 'success');
+    router.push('/');
   }
 
   return (
     <ScreenContainer scroll>
+      <AppHeader title="Решение" />
       {!decision ? (
         <Card>
           <View style={styles.emptyState}>
@@ -150,7 +146,8 @@ export default function DecisionDetailsScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>{decision.title}</Text>
             <Text style={styles.subtitle}>
-              Лучший вариант: {winnerName ?? 'результат пока нельзя рассчитать'}
+              Лучший вариант:{' '}
+              {winnerName ?? 'результат пока нельзя рассчитать'}
             </Text>
           </View>
 
@@ -188,11 +185,21 @@ export default function DecisionDetailsScreen() {
             <Button
               title="Удалить решение"
               variant="danger"
-              onPress={confirmDelete}
+              onPress={() => setIsDeleteModalVisible(true)}
             />
           </View>
         </View>
       )}
+
+      <ConfirmModal
+        visible={isDeleteModalVisible}
+        title="Удалить решение?"
+        message="Это действие нельзя отменить."
+        confirmLabel="Удалить"
+        danger
+        onConfirm={handleDelete}
+        onCancel={() => setIsDeleteModalVisible(false)}
+      />
     </ScreenContainer>
   );
 }
@@ -222,8 +229,10 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   badge: {
+    borderWidth: 1,
+    borderColor: COLORS.accentLight,
     borderRadius: 999,
-    backgroundColor: COLORS.accentLight,
+    backgroundColor: COLORS.accentVeryLight,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },

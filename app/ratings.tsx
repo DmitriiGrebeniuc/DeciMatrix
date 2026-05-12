@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { RatingScale } from '../src/components/decision/RatingScale';
 import { Button } from '../src/components/ui/Button';
+import { AppHeader } from '../src/components/ui/AppHeader';
 import { Card } from '../src/components/ui/Card';
 import { ProgressBar } from '../src/components/ui/ProgressBar';
 import { ScreenContainer } from '../src/components/ui/ScreenContainer';
@@ -135,6 +136,7 @@ export default function RateOptionsScreen() {
 
   return (
     <ScreenContainer scroll>
+      <AppHeader title="Оценка" />
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.progressText}>

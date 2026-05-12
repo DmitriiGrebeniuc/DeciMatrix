@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CriterionCard } from '../src/components/decision/CriterionCard';
 import { Button } from '../src/components/ui/Button';
+import { AppHeader } from '../src/components/ui/AppHeader';
 import { Card } from '../src/components/ui/Card';
 import { ScreenContainer } from '../src/components/ui/ScreenContainer';
 import { TextInput } from '../src/components/ui/TextInput';
@@ -107,6 +108,7 @@ export default function AddCriteriaScreen() {
 
   return (
     <ScreenContainer scroll>
+      <AppHeader title="Критерии" />
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Что важно при выборе?</Text>
@@ -230,7 +232,7 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.accentLight,
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 9,
@@ -246,7 +248,7 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 14,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: COLORS.accent,
   },
   chipTextDisabled: {
     color: COLORS.textSecondary,

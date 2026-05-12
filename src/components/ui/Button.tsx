@@ -29,19 +29,21 @@ export function Button({
       style={({ pressed }) => [
         styles.button,
         styles[variant],
+        pressed && variant === 'primary' && !isDisabled && styles.primaryPressed,
         isDisabled && styles.disabled,
         pressed && !isDisabled && styles.pressed,
       ]}
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'secondary' ? COLORS.accent : COLORS.surface}
+          color={variant === 'primary' ? COLORS.surface : COLORS.accent}
         />
       ) : (
         <Text
           style={[
             styles.title,
             variant === 'secondary' && styles.secondaryTitle,
+            variant === 'danger' && styles.dangerTitle,
             isDisabled && styles.disabledTitle,
           ]}
           numberOfLines={1}
@@ -65,17 +67,22 @@ const styles = StyleSheet.create({
   primary: {
     backgroundColor: COLORS.accent,
   },
+  primaryPressed: {
+    backgroundColor: COLORS.accentDark,
+  },
   secondary: {
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.muted,
+    borderColor: COLORS.accentLight,
+    backgroundColor: COLORS.surface,
   },
   danger: {
-    backgroundColor: COLORS.danger,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    backgroundColor: COLORS.surface,
   },
   disabled: {
     borderColor: COLORS.border,
-    backgroundColor: COLORS.muted,
+    backgroundColor: '#E5E7EB',
   },
   pressed: {
     transform: [{ scale: 0.99 }],
@@ -87,7 +94,10 @@ const styles = StyleSheet.create({
     color: COLORS.surface,
   },
   secondaryTitle: {
-    color: COLORS.textPrimary,
+    color: COLORS.accent,
+  },
+  dangerTitle: {
+    color: COLORS.danger,
   },
   disabledTitle: {
     color: COLORS.textSecondary,

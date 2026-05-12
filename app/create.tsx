@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../src/components/ui/Button';
+import { AppHeader } from '../src/components/ui/AppHeader';
 import { ScreenContainer } from '../src/components/ui/ScreenContainer';
 import { TextInput } from '../src/components/ui/TextInput';
 import { COLORS } from '../src/constants/colors';
@@ -41,6 +42,7 @@ export default function CreateDecisionScreen() {
 
   return (
     <ScreenContainer scroll>
+      <AppHeader title="Новое решение" />
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Что ты хочешь решить?</Text>

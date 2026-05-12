@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { OptionCard } from '../src/components/decision/OptionCard';
 import { Button } from '../src/components/ui/Button';
+import { AppHeader } from '../src/components/ui/AppHeader';
 import { Card } from '../src/components/ui/Card';
 import { ScreenContainer } from '../src/components/ui/ScreenContainer';
 import { TextInput } from '../src/components/ui/TextInput';
@@ -90,6 +91,7 @@ export default function AddOptionsScreen() {
 
   return (
     <ScreenContainer scroll>
+      <AppHeader title="Варианты" />
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Между чем выбираем?</Text>

@@ -4,6 +4,7 @@ import {
   TextInput as NativeTextInput,
   View,
 } from 'react-native';
+import { useState } from 'react';
 
 import { COLORS } from '../../constants/colors';
 
@@ -22,6 +23,8 @@ export function TextInput({
   multiline = false,
   error,
 }: TextInputProps) {
+  const [isFocused, setIsFocused] = useState(false);
+
   return (
     <View style={styles.container}>
       <NativeTextInput
@@ -31,9 +34,12 @@ export function TextInput({
         placeholderTextColor={COLORS.textSecondary}
         multiline={multiline}
         returnKeyType={multiline ? 'default' : 'done'}
+        onBlur={() => setIsFocused(false)}
+        onFocus={() => setIsFocused(true)}
         textAlignVertical={multiline ? 'top' : 'center'}
         style={[
           styles.input,
+          isFocused && styles.focusedInput,
           multiline && styles.multiline,
           error && styles.inputError,
         ]}
@@ -57,6 +63,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     fontSize: 17,
     color: COLORS.textPrimary,
+  },
+  focusedInput: {
+    borderColor: COLORS.accent,
   },
   multiline: {
     minHeight: 116,
