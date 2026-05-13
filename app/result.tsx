@@ -18,7 +18,9 @@ import {
   canShowResult,
   getMissingScoresCount,
 } from '../src/services/decisionValidation';
+import { getResultOutcome } from '../src/services/resultOutcome';
 import { useDecisionStore } from '../src/store/decisionStore';
+import type { Decision, OptionResult } from '../src/types/decision';
 
 export default function ResultScreen() {
   const router = useRouter();
@@ -48,14 +50,23 @@ export default function ResultScreen() {
     () => (decision && isReady ? calculateDecisionResult(decision) : null),
     [decision, isReady]
   );
-  const winnerName =
-    decision && result
-      ? decision.options.find((option) => option.id === result.winnerOptionId)
-          ?.name ?? 'Не определен'
+  const outcomeDetails = result ? getResultOutcome(result) : null;
+  const winnerResult = outcomeDetails?.first ?? null;
+  const resultTitle = outcomeDetails
+    ? getOutcomeTitle(outcomeDetails.outcome)
+    : 'Лучше всего подходит';
+  const resultCardTitle =
+    decision && outcomeDetails
+      ? getResultCardTitle(decision, outcomeDetails.tiedOptions, winnerResult)
       : 'Не определен';
-  const winnerResult = result?.options[0];
   const explanation =
-    decision && result ? getWinnerExplanation(decision, result) : '';
+    decision && result && outcomeDetails
+      ? getOutcomeExplanation(decision, result, outcomeDetails)
+      : '';
+  const comparedOptions =
+    decision && outcomeDetails
+      ? getComparedOptions(decision, outcomeDetails)
+      : [];
 
   useEffect(() => {
     if (!isLoaded) {
@@ -102,7 +113,7 @@ export default function ResultScreen() {
     <ScreenContainer scroll>
       <AppHeader title="Результат" />
       <View style={styles.container}>
-        <Text style={styles.title}>Лучше всего подходит</Text>
+        <Text style={styles.title}>{resultTitle}</Text>
 
         {!decision ? (
           <Card>
@@ -114,7 +125,7 @@ export default function ResultScreen() {
               <Button title="На главную" onPress={() => router.push('/')} />
             </View>
           </Card>
-        ) : !isReady || !result || !winnerResult ? (
+        ) : !isReady || !result || !winnerResult || !outcomeDetails ? (
           <Card>
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>
@@ -127,9 +138,11 @@ export default function ResultScreen() {
         ) : (
           <>
             <ResultCard
-              winnerName={winnerName}
+              outcome={outcomeDetails.outcome}
+              winnerName={resultCardTitle}
               matchPercent={winnerResult.matchPercent}
               explanation={explanation}
+              comparedOptions={comparedOptions}
             />
 
             <View style={styles.section}>
@@ -160,6 +173,93 @@ export default function ResultScreen() {
       </View>
     </ScreenContainer>
   );
+}
+
+function getOptionName(decision: Decision, optionResult?: OptionResult | null) {
+  if (!optionResult) {
+    return 'Не определен';
+  }
+
+  return (
+    decision.options.find((option) => option.id === optionResult.optionId)
+      ?.name ?? 'Не определен'
+  );
+}
+
+function getOutcomeTitle(outcome: 'winner' | 'close_call' | 'tie'): string {
+  if (outcome === 'tie') {
+    return 'Ничья';
+  }
+
+  if (outcome === 'close_call') {
+    return 'Очень близкий результат';
+  }
+
+  return 'Лучше всего подходит';
+}
+
+function getResultCardTitle(
+  decision: Decision,
+  tiedOptions: OptionResult[],
+  winnerResult: OptionResult | null
+): string {
+  if (tiedOptions.length > 1) {
+    return tiedOptions.map((option) => getOptionName(decision, option)).join(' и ');
+  }
+
+  return getOptionName(decision, winnerResult);
+}
+
+function getOutcomeExplanation(
+  decision: Decision,
+  result: NonNullable<ReturnType<typeof calculateDecisionResult>>,
+  outcomeDetails: ReturnType<typeof getResultOutcome>
+): string {
+  const firstName = getOptionName(decision, outcomeDetails.first);
+  const secondName = getOptionName(decision, outcomeDetails.second);
+
+  if (outcomeDetails.outcome === 'tie') {
+    if (outcomeDetails.tiedOptions.length > 2) {
+      const names = outcomeDetails.tiedOptions
+        .map((option) => getOptionName(decision, option))
+        .join(', ');
+
+      return `${names} набрали одинаковый результат. Эти варианты одинаково совпали с твоими критериями. Чтобы выбрать точнее, можно добавить еще один критерий или пересмотреть важность.`;
+    }
+
+    return `${firstName} и ${secondName} набрали одинаковый результат. Эти варианты одинаково совпали с твоими критериями. Чтобы выбрать точнее, можно добавить еще один критерий или пересмотреть важность.`;
+  }
+
+  if (outcomeDetails.outcome === 'close_call') {
+    return `${firstName} немного впереди, но ${secondName} почти не уступает. Разница небольшая. Если сомневаешься, проверь самые важные критерии или добавь еще один критерий.`;
+  }
+
+  return getWinnerExplanation(decision, result);
+}
+
+function getComparedOptions(
+  decision: Decision,
+  outcomeDetails: ReturnType<typeof getResultOutcome>
+) {
+  if (outcomeDetails.outcome === 'tie') {
+    return outcomeDetails.tiedOptions.map((option) => ({
+      name: getOptionName(decision, option),
+      matchPercent: option.matchPercent,
+    }));
+  }
+
+  if (
+    outcomeDetails.outcome === 'close_call' &&
+    outcomeDetails.first &&
+    outcomeDetails.second
+  ) {
+    return [outcomeDetails.first, outcomeDetails.second].map((option) => ({
+      name: getOptionName(decision, option),
+      matchPercent: option.matchPercent,
+    }));
+  }
+
+  return [];
 }
 
 const styles = StyleSheet.create({

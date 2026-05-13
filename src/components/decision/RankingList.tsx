@@ -17,21 +17,38 @@ function getOptionName(options: Option[], optionId: string): string {
 export function RankingList({ results, options }: RankingListProps) {
   return (
     <View style={styles.container}>
-      {results.map((result) => (
-        <Card key={result.optionId}>
-          <View style={styles.row}>
-            <Text style={styles.rank}>{result.rank}</Text>
-            <Text style={styles.name} numberOfLines={2}>
-              {getOptionName(options, result.optionId)}
-            </Text>
-            <Text style={styles.percent}>
-              {formatPercent(result.matchPercent)}
-            </Text>
-          </View>
-        </Card>
-      ))}
+      {results.map((result, index) => {
+        const displayRank = getDisplayRank(results, result, index);
+
+        return (
+          <Card key={result.optionId}>
+            <View style={styles.row}>
+              <Text style={styles.rank}>{displayRank}</Text>
+              <Text style={styles.name} numberOfLines={2}>
+                {getOptionName(options, result.optionId)}
+              </Text>
+              <Text style={styles.percent}>
+                {formatPercent(result.matchPercent)}
+              </Text>
+            </View>
+          </Card>
+        );
+      })}
     </View>
   );
+}
+
+function getDisplayRank(
+  results: OptionResult[],
+  result: OptionResult,
+  index: number
+): number {
+  const displayPercent = Math.round(result.matchPercent);
+  const samePercentIndex = results.findIndex(
+    (item) => Math.round(item.matchPercent) === displayPercent
+  );
+
+  return samePercentIndex >= 0 ? samePercentIndex + 1 : index + 1;
 }
 
 const styles = StyleSheet.create({

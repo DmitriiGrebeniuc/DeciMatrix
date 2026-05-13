@@ -141,7 +141,7 @@ export function getWinnerExplanation(
   );
 
   if (!winner) {
-    return 'Недостаточно данных, чтобы определить победителя.';
+    return 'Недостаточно данных, чтобы определить лучший вариант.';
   }
 
   const strongestCriteria = [...winner.criterionBreakdown]
