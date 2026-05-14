@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { RankingList } from '../src/components/decision/RankingList';
 import { ResultCard } from '../src/components/decision/ResultCard';
@@ -239,28 +239,50 @@ function AiAnalysisBlock({
   return (
     <Card>
       <View style={styles.aiBlock}>
-        <View style={styles.aiHeader}>
-          <Text style={styles.aiTitle}>AI-разбор</Text>
-          <Text style={styles.aiHint}>
-            Дополнительный взгляд на результат, без замены твоего выбора.
+        <Pressable
+          accessibilityRole="button"
+          disabled={isLoading}
+          onPress={onGenerate}
+          style={({ pressed }) => [
+            styles.aiActionCard,
+            pressed && !isLoading && styles.pressed,
+            isLoading && styles.aiActionDisabled,
+          ]}
+        >
+          <View style={styles.aiActionTop}>
+            <View style={styles.aiIcon}>
+              <Text style={styles.aiIconText}>✦</Text>
+            </View>
+            <View style={styles.aiActionTextWrap}>
+              <View style={styles.aiTitleRow}>
+                <Text style={styles.aiActionTitle}>AI-разбор результата</Text>
+                <View style={styles.aiBadge}>
+                  <Text style={styles.aiBadgeText}>AI</Text>
+                </View>
+              </View>
+              <Text style={styles.aiActionDescription}>
+                Дополнительный взгляд на сильные стороны, риски и спорные места.
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.aiActionCta}>
+            {isLoading ? 'Готовим AI-разбор...' : 'Сгенерировать AI-разбор'}
           </Text>
-        </View>
+        </Pressable>
 
-        {!analysis ? (
-          <Button
-            title={isLoading ? 'Готовим AI-разбор...' : 'Сгенерировать AI-разбор'}
-            variant="secondary"
-            disabled={isLoading}
-            onPress={onGenerate}
-          />
-        ) : (
+        <Text style={styles.aiHint}>
+          AI не заменяет твой выбор, а помогает взглянуть на результат
+          внимательнее.
+        </Text>
+
+        {analysis ? (
           <View style={styles.aiContent}>
             <Text style={styles.aiSummary}>{analysis.summary}</Text>
             <AnalysisList title="Что решило исход" items={analysis.reasons} />
             <AnalysisList title="Где можно ошибиться" items={analysis.cautions} />
             <AnalysisList title="Что проверить перед выбором" items={analysis.advice} />
           </View>
-        )}
+        ) : null}
       </View>
     </Card>
   );
@@ -447,13 +469,79 @@ const styles = StyleSheet.create({
   aiBlock: {
     gap: 14,
   },
-  aiHeader: {
-    gap: 5,
+  aiActionCard: {
+    gap: 12,
+    borderWidth: 1,
+    borderColor: COLORS.accentLight,
+    borderRadius: 20,
+    padding: 16,
+    backgroundColor: COLORS.accentVeryLight,
   },
-  aiTitle: {
+  aiActionDisabled: {
+    opacity: 0.75,
+  },
+  aiActionTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  aiIcon: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.accentLight,
+  },
+  aiIconText: {
     fontSize: 20,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: COLORS.accentDark,
+  },
+  aiActionTextWrap: {
+    flex: 1,
+    gap: 5,
+  },
+  aiTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  aiActionTitle: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '800',
+    color: COLORS.accentDark,
+  },
+  aiActionDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: COLORS.textSecondary,
+  },
+  aiActionCta: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: COLORS.accentLight,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: COLORS.surface,
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.accentDark,
+  },
+  aiBadge: {
+    borderRadius: 999,
+    backgroundColor: COLORS.accentLight,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  aiBadgeText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: COLORS.accentDark,
   },
   aiHint: {
     fontSize: 14,
@@ -486,5 +574,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: COLORS.textSecondary,
+  },
+  pressed: {
+    opacity: 0.82,
   },
 });

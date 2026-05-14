@@ -14,17 +14,6 @@ import { ENABLE_AI_FEATURES } from '../src/constants/features';
 import { suggestCriteria } from '../src/services/aiService';
 import { useDecisionStore } from '../src/store/decisionStore';
 
-const SUGGESTED_CRITERIA = [
-  'Цена',
-  'Качество',
-  'Удобство',
-  'Скорость',
-  'Риск',
-  'Надежность',
-  'Дизайн',
-  'Польза',
-];
-
 export default function AddCriteriaScreen() {
   const router = useRouter();
   const { showToast } = useToast();
@@ -44,6 +33,7 @@ export default function AddCriteriaScreen() {
   const [error, setError] = useState<string | undefined>();
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [isSuggestingCriteria, setIsSuggestingCriteria] = useState(false);
+  const [didRequestAiSuggestions, setDidRequestAiSuggestions] = useState(false);
 
   const decisionId = params.decisionId ?? currentDecisionId;
   const decision = useMemo(
@@ -116,6 +106,7 @@ export default function AddCriteriaScreen() {
       return;
     }
 
+    setDidRequestAiSuggestions(true);
     setIsSuggestingCriteria(true);
 
     try {
@@ -187,23 +178,55 @@ export default function AddCriteriaScreen() {
 
         {ENABLE_AI_FEATURES ? (
           <View style={styles.aiBlock}>
-            <Button
-              title={
-                isSuggestingCriteria
-                  ? 'Подбираем критерии...'
-                  : 'Помочь с критериями'
-              }
-              variant="secondary"
+            <Pressable
+              accessibilityRole="button"
               disabled={!decision || isSuggestingCriteria}
               onPress={() => {
                 void handleSuggestCriteria();
               }}
-            />
+              style={({ pressed }) => [
+                styles.aiActionCard,
+                pressed && !isSuggestingCriteria && styles.pressed,
+                (!decision || isSuggestingCriteria) && styles.aiActionDisabled,
+              ]}
+            >
+              <View style={styles.aiActionTop}>
+                <View style={styles.aiIcon}>
+                  <Text style={styles.aiIconText}>✦</Text>
+                </View>
+                <View style={styles.aiActionTextWrap}>
+                  <View style={styles.aiTitleRow}>
+                    <Text style={styles.aiActionTitle}>
+                      {isSuggestingCriteria
+                        ? 'Подбираем критерии...'
+                        : 'Подобрать критерии с AI'}
+                    </Text>
+                    <View style={styles.aiBadge}>
+                      <Text style={styles.aiBadgeText}>AI</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.aiActionDescription}>
+                    AI предложит критерии на основе твоего решения и вариантов.
+                  </Text>
+                </View>
+              </View>
+            </Pressable>
+
+            {didRequestAiSuggestions && aiSuggestions.length === 0 && !isSuggestingCriteria ? (
+              <Text style={styles.aiEmptyText}>
+                Не получилось подобрать критерии. Попробуй добавить их вручную.
+              </Text>
+            ) : null}
 
             {aiSuggestions.length > 0 ? (
               <Card>
                 <View style={styles.aiSuggestions}>
-                  <Text style={styles.aiTitle}>AI предложил</Text>
+                  <View style={styles.aiTitleRow}>
+                    <Text style={styles.aiSuggestionsTitle}>AI предложил</Text>
+                    <View style={styles.aiBadge}>
+                      <Text style={styles.aiBadgeText}>AI</Text>
+                    </View>
+                  </View>
                   <View style={styles.chips}>
                     {aiSuggestions.map((criterion) => {
                       const isDisabled = hasCriterion(criterion) || !decisionId;
@@ -223,21 +246,6 @@ export default function AddCriteriaScreen() {
             ) : null}
           </View>
         ) : null}
-
-        <View style={styles.chips}>
-          {SUGGESTED_CRITERIA.map((criterion) => {
-            const isDisabled = hasCriterion(criterion) || !decisionId;
-
-            return (
-              <CriteriaChip
-                key={criterion}
-                title={criterion}
-                disabled={isDisabled}
-                onPress={() => handleAddCriterion(criterion)}
-              />
-            );
-          })}
-        </View>
 
         {!decision ? (
           <Card>
@@ -326,10 +334,76 @@ const styles = StyleSheet.create({
   aiBlock: {
     gap: 12,
   },
+  aiActionCard: {
+    borderWidth: 1,
+    borderColor: COLORS.accentLight,
+    borderRadius: 22,
+    padding: 16,
+    backgroundColor: COLORS.accentVeryLight,
+  },
+  aiActionDisabled: {
+    opacity: 0.75,
+  },
+  aiActionTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  aiIcon: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.accentLight,
+  },
+  aiIconText: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: COLORS.accentDark,
+  },
+  aiActionTextWrap: {
+    flex: 1,
+    gap: 5,
+  },
+  aiTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  aiActionTitle: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '800',
+    color: COLORS.accentDark,
+  },
+  aiActionDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: COLORS.textSecondary,
+  },
+  aiBadge: {
+    borderRadius: 999,
+    backgroundColor: COLORS.accentLight,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  aiBadgeText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: COLORS.accentDark,
+  },
+  aiEmptyText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: COLORS.textSecondary,
+  },
   aiSuggestions: {
     gap: 12,
   },
-  aiTitle: {
+  aiSuggestionsTitle: {
     fontSize: 16,
     fontWeight: '800',
     color: COLORS.textPrimary,
@@ -374,5 +448,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: COLORS.textSecondary,
+  },
+  pressed: {
+    opacity: 0.82,
   },
 });
