@@ -3,12 +3,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CriterionCard } from '../src/components/decision/CriterionCard';
-import { Button } from '../src/components/ui/Button';
 import { AppHeader } from '../src/components/ui/AppHeader';
+import { Button } from '../src/components/ui/Button';
 import { Card } from '../src/components/ui/Card';
 import { ScreenContainer } from '../src/components/ui/ScreenContainer';
 import { TextInput } from '../src/components/ui/TextInput';
+import { useToast } from '../src/components/ui/Toast';
 import { COLORS } from '../src/constants/colors';
+import { ENABLE_AI_FEATURES } from '../src/constants/features';
+import { suggestCriteria } from '../src/services/aiService';
 import { useDecisionStore } from '../src/store/decisionStore';
 
 const SUGGESTED_CRITERIA = [
@@ -24,6 +27,7 @@ const SUGGESTED_CRITERIA = [
 
 export default function AddCriteriaScreen() {
   const router = useRouter();
+  const { showToast } = useToast();
   const params = useLocalSearchParams<{ decisionId?: string }>();
   const decisions = useDecisionStore((state) => state.decisions);
   const currentDecisionId = useDecisionStore(
@@ -38,6 +42,8 @@ export default function AddCriteriaScreen() {
   const removeCriterion = useDecisionStore((state) => state.removeCriterion);
   const [criterionName, setCriterionName] = useState('');
   const [error, setError] = useState<string | undefined>();
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [isSuggestingCriteria, setIsSuggestingCriteria] = useState(false);
 
   const decisionId = params.decisionId ?? currentDecisionId;
   const decision = useMemo(
@@ -46,6 +52,7 @@ export default function AddCriteriaScreen() {
   );
   const trimmedCriterionName = criterionName.trim();
   const canContinue = (decision?.criteria.length ?? 0) >= 2;
+  const hasEnoughOptions = (decision?.options.length ?? 0) >= 2;
 
   useEffect(() => {
     if (!isLoaded) {
@@ -81,6 +88,12 @@ export default function AddCriteriaScreen() {
     }
 
     addCriterion(decisionId, nextName);
+    setAiSuggestions((suggestions) =>
+      suggestions.filter(
+        (suggestion) =>
+          suggestion.trim().toLowerCase() !== nextName.toLowerCase()
+      )
+    );
     setCriterionName('');
     setError(undefined);
   }
@@ -91,6 +104,40 @@ export default function AddCriteriaScreen() {
     }
 
     removeCriterion(decisionId, criterionId);
+  }
+
+  async function handleSuggestCriteria(): Promise<void> {
+    if (!decision) {
+      return;
+    }
+
+    if (!hasEnoughOptions) {
+      showToast('Сначала добавь минимум два варианта', 'neutral');
+      return;
+    }
+
+    setIsSuggestingCriteria(true);
+
+    try {
+      const criteria = await suggestCriteria({
+        decisionTitle: decision.title,
+        options: decision.options.map((option) => option.name),
+        existingCriteria: decision.criteria.map((criterion) => criterion.name),
+      });
+      const nextSuggestions = criteria.filter(
+        (criterion, index, list) =>
+          !hasCriterion(criterion) &&
+          list.findIndex(
+            (item) => item.trim().toLowerCase() === criterion.trim().toLowerCase()
+          ) === index
+      );
+
+      setAiSuggestions(nextSuggestions);
+    } catch {
+      showToast('Не получилось получить критерии', 'error');
+    } finally {
+      setIsSuggestingCriteria(false);
+    }
   }
 
   function handleNext(): void {
@@ -138,30 +185,56 @@ export default function AddCriteriaScreen() {
           </View>
         </View>
 
+        {ENABLE_AI_FEATURES ? (
+          <View style={styles.aiBlock}>
+            <Button
+              title={
+                isSuggestingCriteria
+                  ? 'Подбираем критерии...'
+                  : 'Помочь с критериями'
+              }
+              variant="secondary"
+              disabled={!decision || isSuggestingCriteria}
+              onPress={() => {
+                void handleSuggestCriteria();
+              }}
+            />
+
+            {aiSuggestions.length > 0 ? (
+              <Card>
+                <View style={styles.aiSuggestions}>
+                  <Text style={styles.aiTitle}>AI предложил</Text>
+                  <View style={styles.chips}>
+                    {aiSuggestions.map((criterion) => {
+                      const isDisabled = hasCriterion(criterion) || !decisionId;
+
+                      return (
+                        <CriteriaChip
+                          key={criterion}
+                          title={criterion}
+                          disabled={isDisabled}
+                          onPress={() => handleAddCriterion(criterion)}
+                        />
+                      );
+                    })}
+                  </View>
+                </View>
+              </Card>
+            ) : null}
+          </View>
+        ) : null}
+
         <View style={styles.chips}>
           {SUGGESTED_CRITERIA.map((criterion) => {
             const isDisabled = hasCriterion(criterion) || !decisionId;
 
             return (
-              <Pressable
+              <CriteriaChip
                 key={criterion}
+                title={criterion}
                 disabled={isDisabled}
                 onPress={() => handleAddCriterion(criterion)}
-                style={({ pressed }) => [
-                  styles.chip,
-                  isDisabled && styles.chipDisabled,
-                  pressed && !isDisabled && styles.chipPressed,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    isDisabled && styles.chipTextDisabled,
-                  ]}
-                >
-                  {criterion}
-                </Text>
-              </Pressable>
+              />
             );
           })}
         </View>
@@ -196,6 +269,31 @@ export default function AddCriteriaScreen() {
   );
 }
 
+type CriteriaChipProps = {
+  title: string;
+  disabled: boolean;
+  onPress: () => void;
+};
+
+function CriteriaChip({ title, disabled, onPress }: CriteriaChipProps) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.chip,
+        disabled && styles.chipDisabled,
+        pressed && !disabled && styles.chipPressed,
+      ]}
+    >
+      <Text style={[styles.chipText, disabled && styles.chipTextDisabled]}>
+        {title}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -224,6 +322,17 @@ const styles = StyleSheet.create({
   },
   addButton: {
     width: 58,
+  },
+  aiBlock: {
+    gap: 12,
+  },
+  aiSuggestions: {
+    gap: 12,
+  },
+  aiTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
   },
   chips: {
     flexDirection: 'row',

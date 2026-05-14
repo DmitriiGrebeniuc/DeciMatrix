@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { RankingList } from '../src/components/decision/RankingList';
@@ -10,6 +10,7 @@ import { Card } from '../src/components/ui/Card';
 import { ScreenContainer } from '../src/components/ui/ScreenContainer';
 import { useToast } from '../src/components/ui/Toast';
 import { COLORS } from '../src/constants/colors';
+import { ENABLE_AI_FEATURES } from '../src/constants/features';
 import {
   calculateDecisionResult,
   getWinnerExplanation,
@@ -18,9 +19,18 @@ import {
   canShowResult,
   getMissingScoresCount,
 } from '../src/services/decisionValidation';
-import { getResultOutcome } from '../src/services/resultOutcome';
+import {
+  analyzeResult,
+  type AiResultAnalysis,
+  type AnalyzeResultRequest,
+} from '../src/services/aiService';
+import { getResultOutcome, type ResultOutcome } from '../src/services/resultOutcome';
 import { useDecisionStore } from '../src/store/decisionStore';
-import type { Decision, OptionResult } from '../src/types/decision';
+import type {
+  CalculatedResult,
+  Decision,
+  OptionResult,
+} from '../src/types/decision';
 
 export default function ResultScreen() {
   const router = useRouter();
@@ -38,6 +48,8 @@ export default function ResultScreen() {
   const completeDecision = useDecisionStore(
     (state) => state.completeDecision
   );
+  const [aiAnalysis, setAiAnalysis] = useState<AiResultAnalysis | null>(null);
+  const [isAnalyzingResult, setIsAnalyzingResult] = useState(false);
 
   const decisionId = params.decisionId ?? currentDecisionId;
   const decision = useMemo(
@@ -67,6 +79,11 @@ export default function ResultScreen() {
     decision && outcomeDetails
       ? getComparedOptions(decision, outcomeDetails)
       : [];
+  const resultSignature = `${decision?.updatedAt ?? ''}:${
+    outcomeDetails?.outcome ?? ''
+  }:${result?.options
+    .map((option) => `${option.optionId}:${option.matchPercent}`)
+    .join('|')}`;
 
   useEffect(() => {
     if (!isLoaded) {
@@ -79,6 +96,10 @@ export default function ResultScreen() {
       setCurrentDecision(params.decisionId);
     }
   }, [params.decisionId, setCurrentDecision]);
+
+  useEffect(() => {
+    setAiAnalysis(null);
+  }, [resultSignature]);
 
   function openRatings(): void {
     router.push({
@@ -107,6 +128,25 @@ export default function ResultScreen() {
     completeDecision(decisionId);
     showToast('Решение сохранено', 'success');
     router.push(`/decision/${decisionId}`);
+  }
+
+  async function handleAnalyzeResult(): Promise<void> {
+    if (!decision || !result || !outcomeDetails) {
+      return;
+    }
+
+    setIsAnalyzingResult(true);
+
+    try {
+      const analysis = await analyzeResult(
+        buildAnalyzeResultPayload(decision, result, outcomeDetails.outcome)
+      );
+      setAiAnalysis(analysis);
+    } catch {
+      showToast('Не получилось получить AI-разбор', 'error');
+    } finally {
+      setIsAnalyzingResult(false);
+    }
   }
 
   return (
@@ -145,6 +185,16 @@ export default function ResultScreen() {
               comparedOptions={comparedOptions}
             />
 
+            {ENABLE_AI_FEATURES ? (
+              <AiAnalysisBlock
+                analysis={aiAnalysis}
+                isLoading={isAnalyzingResult}
+                onGenerate={() => {
+                  void handleAnalyzeResult();
+                }}
+              />
+            ) : null}
+
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Рейтинг</Text>
               <RankingList results={result.options} options={decision.options} />
@@ -175,6 +225,104 @@ export default function ResultScreen() {
   );
 }
 
+type AiAnalysisBlockProps = {
+  analysis: AiResultAnalysis | null;
+  isLoading: boolean;
+  onGenerate: () => void;
+};
+
+function AiAnalysisBlock({
+  analysis,
+  isLoading,
+  onGenerate,
+}: AiAnalysisBlockProps) {
+  return (
+    <Card>
+      <View style={styles.aiBlock}>
+        <View style={styles.aiHeader}>
+          <Text style={styles.aiTitle}>AI-разбор</Text>
+          <Text style={styles.aiHint}>
+            Дополнительный взгляд на результат, без замены твоего выбора.
+          </Text>
+        </View>
+
+        {!analysis ? (
+          <Button
+            title={isLoading ? 'Готовим AI-разбор...' : 'Сгенерировать AI-разбор'}
+            variant="secondary"
+            disabled={isLoading}
+            onPress={onGenerate}
+          />
+        ) : (
+          <View style={styles.aiContent}>
+            <Text style={styles.aiSummary}>{analysis.summary}</Text>
+            <AnalysisList title="Что решило исход" items={analysis.reasons} />
+            <AnalysisList title="Где можно ошибиться" items={analysis.cautions} />
+            <AnalysisList title="Что проверить перед выбором" items={analysis.advice} />
+          </View>
+        )}
+      </View>
+    </Card>
+  );
+}
+
+type AnalysisListProps = {
+  title: string;
+  items: string[];
+};
+
+function AnalysisList({ title, items }: AnalysisListProps) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <View style={styles.analysisList}>
+      <Text style={styles.analysisTitle}>{title}</Text>
+      {items.map((item) => (
+        <Text key={item} style={styles.analysisItem}>
+          - {item}
+        </Text>
+      ))}
+    </View>
+  );
+}
+
+function buildAnalyzeResultPayload(
+  decision: Decision,
+  result: CalculatedResult,
+  outcome: ResultOutcome
+): AnalyzeResultRequest {
+  return {
+    decisionTitle: decision.title,
+    options: decision.options.map((option) => ({
+      id: option.id,
+      name: option.name,
+    })),
+    criteria: decision.criteria.map((criterion) => ({
+      id: criterion.id,
+      name: criterion.name,
+      importance: criterion.importance,
+    })),
+    scores: decision.scores.map((score) => ({
+      optionId: score.optionId,
+      criterionId: score.criterionId,
+      rating: score.rating,
+      value: score.value,
+    })),
+    result: {
+      winnerOptionId: result.winnerOptionId,
+      outcome,
+      ranking: result.options.map((optionResult) => ({
+        optionId: optionResult.optionId,
+        optionName: getOptionName(decision, optionResult),
+        matchPercent: optionResult.matchPercent,
+        rank: optionResult.rank,
+      })),
+    },
+  };
+}
+
 function getOptionName(decision: Decision, optionResult?: OptionResult | null) {
   if (!optionResult) {
     return 'Не определен';
@@ -186,7 +334,7 @@ function getOptionName(decision: Decision, optionResult?: OptionResult | null) {
   );
 }
 
-function getOutcomeTitle(outcome: 'winner' | 'close_call' | 'tie'): string {
+function getOutcomeTitle(outcome: ResultOutcome): string {
   if (outcome === 'tie') {
     return 'Ничья';
   }
@@ -212,7 +360,7 @@ function getResultCardTitle(
 
 function getOutcomeExplanation(
   decision: Decision,
-  result: NonNullable<ReturnType<typeof calculateDecisionResult>>,
+  result: CalculatedResult,
   outcomeDetails: ReturnType<typeof getResultOutcome>
 ): string {
   const firstName = getOptionName(decision, outcomeDetails.first);
@@ -294,6 +442,49 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 15,
     lineHeight: 21,
+    color: COLORS.textSecondary,
+  },
+  aiBlock: {
+    gap: 14,
+  },
+  aiHeader: {
+    gap: 5,
+  },
+  aiTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+  },
+  aiHint: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: COLORS.textSecondary,
+  },
+  aiContent: {
+    gap: 14,
+  },
+  aiSummary: {
+    borderWidth: 1,
+    borderColor: COLORS.accentLight,
+    borderRadius: 16,
+    padding: 14,
+    backgroundColor: COLORS.accentVeryLight,
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  analysisList: {
+    gap: 6,
+  },
+  analysisTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: COLORS.accentDark,
+  },
+  analysisItem: {
+    fontSize: 15,
+    lineHeight: 22,
     color: COLORS.textSecondary,
   },
 });
