@@ -87,10 +87,13 @@ export default function LandingScreen() {
     router.push('/app');
   }
 
-  function goToHash(hash: string): void {
-    if (typeof window !== 'undefined') {
-      window.location.hash = hash;
+  function scrollToSection(hash: string): void {
+    if (typeof document === 'undefined') {
+      return;
     }
+
+    const section = document.getElementById(hash.replace('#', ''));
+    section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   return (
@@ -109,11 +112,11 @@ export default function LandingScreen() {
             <View style={styles.nav}>
               {navItems.map((item) => (
                 <Pressable
-                  key={item.href}
-                  accessibilityRole="link"
-                  onPress={() => goToHash(item.href)}
-                  style={({ pressed }) => pressed && styles.pressed}
-                >
+                key={item.href}
+                accessibilityRole="link"
+                onPress={() => scrollToSection(item.href)}
+                style={({ pressed }) => pressed && styles.pressed}
+              >
                   <Text style={styles.navText}>{item.label}</Text>
                 </Pressable>
               ))}
@@ -147,12 +150,12 @@ export default function LandingScreen() {
               <Button
                 title="Скачать APK"
                 variant="secondary"
-                onPress={() => goToHash('#download')}
+                onPress={() => scrollToSection('#download')}
               />
               <Button
                 title="Поддержать разработчика"
                 variant="secondary"
-                onPress={() => goToHash('#support')}
+                onPress={() => scrollToSection('#support')}
               />
             </View>
           </View>
@@ -344,10 +347,10 @@ export default function LandingScreen() {
           </View>
           <View style={[styles.footerLinks, isNarrow && styles.footerLinksNarrow]}>
             <FooterLink label="Открыть приложение" onPress={openApp} />
-            <FooterLink label="Скачать APK" onPress={() => goToHash('#download')} />
-            <FooterLink label="Поддержать" onPress={() => goToHash('#support')} />
-            <FooterLink label="Контакты" onPress={() => goToHash('#contacts')} />
-            <FooterLink label="Privacy note" onPress={() => goToHash('#privacy')} />
+            <FooterLink label="Скачать APK" onPress={() => scrollToSection('#download')} />
+            <FooterLink label="Поддержать" onPress={() => scrollToSection('#support')} />
+            <FooterLink label="Контакты" onPress={() => scrollToSection('#contacts')} />
+            <FooterLink label="Privacy note" onPress={() => scrollToSection('#privacy')} />
           </View>
         </View>
       </ScrollView>
