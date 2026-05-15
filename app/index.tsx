@@ -18,7 +18,7 @@ import { Button } from '../src/components/ui/Button';
 import { LogoMark } from '../src/components/ui/LogoMark';
 import { COLORS } from '../src/constants/colors';
 
-const APK_DOWNLOAD_URL = '#';
+const APK_DOWNLOAD_URL = '/downloads/decimatrix.apk';
 const PAYPAL_URL = 'https://paypal.me/DmitriiGrebeniuc';
 
 const navItems = [
@@ -81,6 +81,21 @@ export default function LandingScreen() {
     }
 
     void Linking.openURL(url);
+  }
+
+  function downloadApk(): void {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const link = document.createElement('a');
+      link.href = APK_DOWNLOAD_URL;
+      link.download = 'decimatrix.apk';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      return;
+    }
+
+    void Linking.openURL(APK_DOWNLOAD_URL);
   }
 
   function openApp(): void {
@@ -178,7 +193,7 @@ export default function LandingScreen() {
               <Button
                 title="Скачать APK"
                 variant="secondary"
-                onPress={() => scrollToSection('#download')}
+                onPress={downloadApk}
               />
             </View>
           </View>
@@ -277,13 +292,7 @@ export default function LandingScreen() {
             <Button
               title="Скачать APK для Android"
               variant="secondary"
-              onPress={() => {
-                if (APK_DOWNLOAD_URL === '#') {
-                  return;
-                }
-                openExternal(APK_DOWNLOAD_URL);
-              }}
-              disabled={APK_DOWNLOAD_URL === '#'}
+              onPress={downloadApk}
             />
           </View>
           <Text style={styles.smallText}>
@@ -372,7 +381,7 @@ export default function LandingScreen() {
           </View>
           <View style={[styles.footerLinks, isNarrow && styles.footerLinksNarrow]}>
             <FooterLink label="Открыть приложение" onPress={openApp} />
-            <FooterLink label="Скачать APK" onPress={() => scrollToSection('#download')} />
+            <FooterLink label="Скачать APK" onPress={downloadApk} />
             <FooterLink label="Поддержать" onPress={() => scrollToSection('#support')} />
             <FooterLink label="Контакты" onPress={() => scrollToSection('#contacts')} />
             <FooterLink label="Privacy note" onPress={() => scrollToSection('#privacy')} />
@@ -474,6 +483,7 @@ const styles = StyleSheet.create({
   },
   brandText: {
     fontSize: 20,
+    lineHeight: 24,
     fontWeight: '900',
     color: COLORS.textPrimary,
   },
