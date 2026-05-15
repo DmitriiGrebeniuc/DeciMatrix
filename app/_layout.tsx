@@ -1,5 +1,7 @@
+import { Analytics } from '@vercel/analytics/react';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 
 import { BrandedLoadingScreen } from '../src/components/ui/BrandedLoadingScreen';
 import { ToastProvider } from '../src/components/ui/Toast';
@@ -34,6 +36,7 @@ export default function RootLayout() {
         <Stack.Screen name="result" options={{ title: 'Result' }} />
         <Stack.Screen name="decision/[id]" options={{ title: 'Decision Details' }} />
       </Stack>
+      {Platform.OS === 'web' ? <Analytics /> : null}
     </ToastProvider>
   );
 }
