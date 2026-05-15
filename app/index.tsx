@@ -104,7 +104,7 @@ export default function LandingScreen() {
       >
         <View style={[styles.header, isNarrow && styles.headerNarrow]}>
           <Link href="/" style={styles.brand}>
-            <LogoMark size={38} rounded={12} />
+            <LogoMark size={isNarrow ? 34 : 38} rounded={12} />
             <Text style={styles.brandText}>DeciMatrix</Text>
           </Link>
 
@@ -126,24 +126,52 @@ export default function LandingScreen() {
           <Pressable
             accessibilityRole="link"
             onPress={openApp}
-            style={({ pressed }) => [styles.headerCta, pressed && styles.pressed]}
+            style={({ pressed }) => [
+              styles.headerCta,
+              isNarrow && styles.headerCtaNarrow,
+              pressed && styles.pressed,
+            ]}
           >
             <Text style={styles.headerCtaText}>Открыть приложение</Text>
           </Pressable>
         </View>
 
         <View style={[styles.hero, isNarrow && styles.heroNarrow]}>
+          {isNarrow ? (
+            <View style={[styles.phonePreview, styles.phonePreviewNarrow]}>
+              <View style={styles.phoneHeader}>
+                <LogoMark size={34} rounded={11} />
+                <Text style={styles.phoneBrand}>DeciMatrix</Text>
+              </View>
+              <Text style={styles.phoneTitle}>Куда переехать жить?</Text>
+              <View style={styles.progressTrack}>
+                <View style={styles.progressFill} />
+              </View>
+              <View style={styles.previewCard}>
+                <Text style={styles.previewCardTitle}>Лучше всего подходит</Text>
+                <Text style={styles.previewWinner}>Кишинёв</Text>
+                <Text style={styles.previewPercent}>82% совпадения</Text>
+                <Text style={styles.previewText}>
+                  Лучше всего совпал с твоими приоритетами: стоимостью жизни, комфортом и возможностями.
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
           <View style={styles.heroText}>
             <Text style={styles.kicker}>Взвешенная матрица решений</Text>
             <Text style={[styles.heroTitle, isNarrow && styles.heroTitleNarrow]}>
               DeciMatrix
             </Text>
             <Text style={[styles.heroSubtitle, isNarrow && styles.heroSubtitleNarrow]}>
-              Принимай решения не на эмоциях, а через критерии, веса и AI-разбор.
+              Принимай решения не на эмоциях, а по понятной структуре.
             </Text>
             <Text style={styles.heroDescription}>
-              DeciMatrix помогает сравнивать варианты по важным критериям, видеть
-              итоговую оценку и получать понятное объяснение результата с помощью AI.
+              Сравни варианты по критериям, задай важность каждого пункта и получи
+              итоговый результат с AI-разбором.
+            </Text>
+            <Text style={styles.heroHint}>
+              Как таблица для принятия решений, только проще, понятнее и с AI-разбором.
             </Text>
             <View style={styles.heroActions}>
               <Button title="Открыть приложение" onPress={openApp} />
@@ -152,32 +180,29 @@ export default function LandingScreen() {
                 variant="secondary"
                 onPress={() => scrollToSection('#download')}
               />
-              <Button
-                title="Поддержать разработчика"
-                variant="secondary"
-                onPress={() => scrollToSection('#support')}
-              />
             </View>
           </View>
 
-          <View style={[styles.phonePreview, isNarrow && styles.phonePreviewNarrow]}>
+          {!isNarrow ? (
+            <View style={styles.phonePreview}>
             <View style={styles.phoneHeader}>
               <LogoMark size={34} rounded={11} />
               <Text style={styles.phoneBrand}>DeciMatrix</Text>
             </View>
-            <Text style={styles.phoneTitle}>Какой ноутбук купить?</Text>
+            <Text style={styles.phoneTitle}>Куда переехать жить?</Text>
             <View style={styles.progressTrack}>
               <View style={styles.progressFill} />
             </View>
             <View style={styles.previewCard}>
               <Text style={styles.previewCardTitle}>Лучше всего подходит</Text>
-              <Text style={styles.previewWinner}>MacBook Air M4</Text>
-              <Text style={styles.previewPercent}>86% совпадения</Text>
+              <Text style={styles.previewWinner}>Кишинёв</Text>
+              <Text style={styles.previewPercent}>82% совпадения</Text>
               <Text style={styles.previewText}>
-                Этот вариант лучше всего совпал с тем, что для тебя важнее всего.
+                Лучше всего совпал с твоими приоритетами: комфортом, стоимостью жизни и возможностями.
               </Text>
             </View>
           </View>
+          ) : null}
         </View>
 
         <Section id="what" title="Что такое взвешенная матрица принятия решений?">
@@ -432,8 +457,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
   },
   headerNarrow: {
-    alignItems: 'flex-start',
-    flexDirection: 'column',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 0,
+    borderRadius: 0,
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    backgroundColor: COLORS.background,
   },
   brand: {
     flexDirection: 'row',
@@ -463,6 +494,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: COLORS.accent,
   },
+  headerCtaNarrow: {
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
   headerCtaText: {
     fontSize: 14,
     fontWeight: '800',
@@ -481,7 +516,8 @@ const styles = StyleSheet.create({
   heroNarrow: {
     flexDirection: 'column',
     alignItems: 'stretch',
-    padding: 18,
+    gap: 16,
+    padding: 16,
   },
   heroText: {
     flex: 1,
@@ -526,6 +562,13 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     color: COLORS.textSecondary,
   },
+  heroHint: {
+    maxWidth: 620,
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '800',
+    color: COLORS.accentDark,
+  },
   heroActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -565,7 +608,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accentLight,
   },
   progressFill: {
-    width: '72%',
+    width: '82%',
     height: '100%',
     borderRadius: 999,
     backgroundColor: COLORS.accent,
