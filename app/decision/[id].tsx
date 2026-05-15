@@ -109,7 +109,7 @@ export default function DecisionDetailsScreen() {
     deleteDecision(id);
     setIsDeleteModalVisible(false);
     showToast('Решение удалено', 'success');
-    router.push('/');
+    router.push('/app');
   }
 
   return (
@@ -122,7 +122,7 @@ export default function DecisionDetailsScreen() {
             <Text style={styles.emptyText}>
               Возможно, оно было удалено или еще не загружено.
             </Text>
-            <Button title="На главную" onPress={() => router.push('/')} />
+            <Button title="На главную" onPress={() => router.push('/app')} />
           </View>
         </Card>
       ) : decision.status === 'draft' ? (

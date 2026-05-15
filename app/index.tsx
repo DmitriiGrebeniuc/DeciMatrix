@@ -1,888 +1,828 @@
-import { useRouter } from 'expo-router';
-import { useEffect, useState, type ReactNode } from 'react';
+import { Link, useRouter } from 'expo-router';
+import { useState } from 'react';
 import {
   Image,
   Linking,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AppHeader } from '../src/components/ui/AppHeader';
+import AppHomeScreen from './app';
 import { Button } from '../src/components/ui/Button';
-import { Card } from '../src/components/ui/Card';
-import { ConfirmModal } from '../src/components/ui/ConfirmModal';
 import { LogoMark } from '../src/components/ui/LogoMark';
-import { ScreenContainer } from '../src/components/ui/ScreenContainer';
-import { useToast } from '../src/components/ui/Toast';
 import { COLORS } from '../src/constants/colors';
-import { calculateDecisionResult } from '../src/services/decisionCalculator';
-import { canShowResult } from '../src/services/decisionValidation';
-import { useDecisionStore } from '../src/store/decisionStore';
-import type { Decision } from '../src/types/decision';
-import { formatDecisionDate } from '../src/utils/dates';
 
-const TAGLINE =
-  'Разложи выбор по полочкам и посмотри, какой вариант подходит лучше.';
-const GATHR_URL = 'https://about.gathr-app.site/';
+const APK_DOWNLOAD_URL = '#';
 const PAYPAL_URL = 'https://paypal.me/DmitriiGrebeniuc';
 
-type HomeModal = 'menu' | 'how-it-works' | 'about' | 'support' | null;
-type SupportMethod = 'paypal' | 'mia';
-
-const SUPPORT_COPY = {
-  title: 'Поддержать DeciMatrix',
-  description:
-    'Если тебе полезна идея DeciMatrix, ты можешь поддержать развитие проекта. Поддержка помогает оплачивать хостинг, AI-запросы, инструменты и новые функции.',
-  paypalDescription: 'Подходит для международной поддержки.',
-  paypalButton: 'Открыть PayPal',
-  miaDescription:
-    'Удобный способ поддержать проект из Молдовы. Отсканируйте QR-код в банковском приложении.',
-};
-
-const SUPPORT_CONTACTS = [
-  {
-    icon: 'TG',
-    title: 'Telegram',
-    value: '@jivot_piva',
-    url: 'https://t.me/jivot_piva',
-  },
-  {
-    icon: 'BOT',
-    title: 'Telegram bot',
-    value: 't.me/gathrapp_bot',
-    url: 'https://t.me/gathrapp_bot',
-  },
-  {
-    icon: 'IG',
-    title: 'Instagram',
-    value: 'instagram.com/gathr.app',
-    url: 'https://www.instagram.com/gathr.app/',
-  },
-  {
-    icon: 'WEB',
-    title: 'Сайт',
-    value: 'gathr-app.site',
-    url: 'https://gathr-app.site',
-  },
-  {
-    icon: 'INFO',
-    title: 'О проекте',
-    value: 'about.gathr-app.site',
-    url: 'https://about.gathr-app.site/',
-  },
+const navItems = [
+  { label: 'Что это', href: '#what' },
+  { label: 'Как работает', href: '#how' },
+  { label: 'Возможности', href: '#features' },
+  { label: 'Скачать', href: '#download' },
+  { label: 'Поддержать', href: '#support' },
 ] as const;
 
-function getWinnerName(decision: Decision): string | null {
-  if (!canShowResult(decision)) {
-    return null;
-  }
+const steps = [
+  ['Добавь варианты', 'Например: MacBook, Lenovo, ASUS или несколько городов для переезда.'],
+  ['Задай критерии', 'Цена, удобство, надежность, перспективы, риски или любые другие важные параметры.'],
+  ['Укажи важность', 'Не все критерии одинаковы. DeciMatrix учитывает вес каждого критерия.'],
+  ['Оцени варианты', 'Поставь оценки по каждому критерию и получи итоговую картину.'],
+  ['Получи AI-разбор', 'AI объяснит результат, сильные и слабые стороны вариантов.'],
+] as const;
 
-  const result = calculateDecisionResult(decision);
-  const winner = decision.options.find(
-    (option) => option.id === result.winnerOptionId
-  );
+const features = [
+  ['Взвешенная матрица', 'Критерии влияют на результат в зависимости от их важности.'],
+  ['AI-помощь с критериями', 'Если сложно понять параметры сравнения, AI предложит критерии.'],
+  ['AI-разбор результата', 'Приложение объясняет, почему один вариант оказался сильнее другого.'],
+  ['Простой мобильный интерфейс', 'Без сложных таблиц и лишней перегрузки.'],
+  ['Для разных решений', 'Подходит для личных, рабочих, бытовых и продуктовых выборов.'],
+  ['Web и Android', 'Можно использовать в браузере или установить Android APK.'],
+] as const;
 
-  return winner?.name ?? null;
-}
+const examples = [
+  'Какой ноутбук купить?',
+  'Куда переехать жить?',
+  'Какую работу выбрать?',
+  'Какой проект развивать первым?',
+  'Какой курс или навык изучать?',
+  'Какой вариант покупки выгоднее?',
+  'Какую идею протестировать первой?',
+  'Какой инструмент выбрать для работы?',
+];
 
-export default function HomeScreen() {
+const contacts = [
+  ['Telegram', 'https://t.me/jivot_piva'],
+  ['Instagram', 'https://www.instagram.com/gathr.app/'],
+  ['Gathr', 'https://gathr-app.site'],
+  ['О Gathr', 'https://about.gathr-app.site/'],
+] as const;
+
+export default function LandingScreen() {
   const router = useRouter();
-  const { showToast } = useToast();
-  const decisions = useDecisionStore((state) => state.decisions);
-  const isLoaded = useDecisionStore((state) => state.isLoaded);
-  const load = useDecisionStore((state) => state.load);
-  const deleteDecision = useDecisionStore((state) => state.deleteDecision);
-  const [homeModal, setHomeModal] = useState<HomeModal>(null);
-  const [deleteCandidate, setDeleteCandidate] = useState<Decision | null>(null);
+  const { width } = useWindowDimensions();
+  const [supportMethod, setSupportMethod] = useState<'paypal' | 'mia'>('paypal');
+  const isNarrow = width < 760;
 
-  useEffect(() => {
-    if (!isLoaded) {
-      void load();
-    }
-  }, [isLoaded, load]);
-
-  function openDecision(decision: Decision): void {
-    router.push(`/decision/${decision.id}`);
+  if (Platform.OS !== 'web') {
+    return <AppHomeScreen />;
   }
 
-  function handleDeleteDecision(): void {
-    if (!deleteCandidate) {
+  function openExternal(url: string): void {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.open(url, '_blank', 'noopener,noreferrer');
       return;
     }
 
-    deleteDecision(deleteCandidate.id);
-    setDeleteCandidate(null);
-    showToast('Решение удалено', 'success');
+    void Linking.openURL(url);
   }
 
-  async function openExternalUrl(url: string): Promise<void> {
-    try {
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.open(url, '_blank', 'noopener,noreferrer');
-        return;
-      }
+  function openApp(): void {
+    router.push('/app');
+  }
 
-      await Linking.openURL(url);
-    } catch {
-      showToast('Не получилось открыть ссылку', 'error');
+  function goToHash(hash: string): void {
+    if (typeof window !== 'undefined') {
+      window.location.hash = hash;
     }
   }
 
   return (
-    <ScreenContainer scroll>
-      <AppHeader home showMenu onMenuPress={() => setHomeModal('menu')} />
-      <View style={styles.header}>
-        <View style={styles.titleBlock}>
-          <Text style={styles.tagline}>{TAGLINE}</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        contentContainerStyle={styles.page}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.header, isNarrow && styles.headerNarrow]}>
+          <Link href="/" style={styles.brand}>
+            <LogoMark size={38} rounded={12} />
+            <Text style={styles.brandText}>DeciMatrix</Text>
+          </Link>
+
+          {!isNarrow ? (
+            <View style={styles.nav}>
+              {navItems.map((item) => (
+                <Pressable
+                  key={item.href}
+                  accessibilityRole="link"
+                  onPress={() => goToHash(item.href)}
+                  style={({ pressed }) => pressed && styles.pressed}
+                >
+                  <Text style={styles.navText}>{item.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+
+          <Pressable
+            accessibilityRole="link"
+            onPress={openApp}
+            style={({ pressed }) => [styles.headerCta, pressed && styles.pressed]}
+          >
+            <Text style={styles.headerCtaText}>Открыть приложение</Text>
+          </Pressable>
         </View>
-        <Button
-          title="Создать решение"
-          onPress={() => router.push('/create')}
-        />
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Последние решения</Text>
+        <View style={[styles.hero, isNarrow && styles.heroNarrow]}>
+          <View style={styles.heroText}>
+            <Text style={styles.kicker}>Взвешенная матрица решений</Text>
+            <Text style={[styles.heroTitle, isNarrow && styles.heroTitleNarrow]}>
+              DeciMatrix
+            </Text>
+            <Text style={[styles.heroSubtitle, isNarrow && styles.heroSubtitleNarrow]}>
+              Принимай решения не на эмоциях, а через критерии, веса и AI-разбор.
+            </Text>
+            <Text style={styles.heroDescription}>
+              DeciMatrix помогает сравнивать варианты по важным критериям, видеть
+              итоговую оценку и получать понятное объяснение результата с помощью AI.
+            </Text>
+            <View style={styles.heroActions}>
+              <Button title="Открыть приложение" onPress={openApp} />
+              <Button
+                title="Скачать APK"
+                variant="secondary"
+                onPress={() => goToHash('#download')}
+              />
+              <Button
+                title="Поддержать разработчика"
+                variant="secondary"
+                onPress={() => goToHash('#support')}
+              />
+            </View>
+          </View>
 
-        {decisions.length === 0 ? (
-          <Card>
-            <View style={styles.emptyState}>
-              <LogoMark size={56} />
-              <Text style={styles.emptyTitle}>Пока здесь пусто</Text>
-              <Text style={styles.emptyText}>
-                Создай первое решение - добавь варианты, критерии и получи
-                понятный результат.
+          <View style={[styles.phonePreview, isNarrow && styles.phonePreviewNarrow]}>
+            <View style={styles.phoneHeader}>
+              <LogoMark size={34} rounded={11} />
+              <Text style={styles.phoneBrand}>DeciMatrix</Text>
+            </View>
+            <Text style={styles.phoneTitle}>Какой ноутбук купить?</Text>
+            <View style={styles.progressTrack}>
+              <View style={styles.progressFill} />
+            </View>
+            <View style={styles.previewCard}>
+              <Text style={styles.previewCardTitle}>Лучше всего подходит</Text>
+              <Text style={styles.previewWinner}>MacBook Air M4</Text>
+              <Text style={styles.previewPercent}>86% совпадения</Text>
+              <Text style={styles.previewText}>
+                Этот вариант лучше всего совпал с тем, что для тебя важнее всего.
               </Text>
             </View>
-          </Card>
-        ) : (
-          <View style={styles.list}>
-            {decisions.map((decision) => {
-              const winnerName =
-                decision.status === 'completed'
-                  ? getWinnerName(decision)
-                  : null;
-
-              return (
-                <Card key={decision.id}>
-                  <View style={styles.cardContent}>
-                    <View style={styles.cardHeader}>
-                      <Pressable
-                        accessibilityRole="button"
-                        onPress={() => openDecision(decision)}
-                        style={({ pressed }) => [
-                          styles.cardTitleButton,
-                          pressed && styles.pressed,
-                        ]}
-                      >
-                        <Text style={styles.cardTitle} numberOfLines={2}>
-                          {decision.title}
-                        </Text>
-                      </Pressable>
-
-                      {decision.status === 'draft' ? (
-                        <View style={styles.badge}>
-                          <Text style={styles.badgeText}>Черновик</Text>
-                        </View>
-                      ) : null}
-
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Удалить решение ${decision.title}`}
-                        hitSlop={10}
-                        onPress={() => setDeleteCandidate(decision)}
-                        style={({ pressed }) => [
-                          styles.deleteButton,
-                          pressed && styles.pressed,
-                        ]}
-                      >
-                        <Text style={styles.deleteText}>×</Text>
-                      </Pressable>
-                    </View>
-
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => openDecision(decision)}
-                      style={({ pressed }) => pressed && styles.pressed}
-                    >
-                      {decision.status === 'completed' ? (
-                        <View style={styles.cardMeta}>
-                          {winnerName ? (
-                            <Text style={styles.winner}>
-                              Лучший вариант: {winnerName}
-                            </Text>
-                          ) : (
-                            <Text style={styles.muted}>
-                              Результат пока нельзя рассчитать
-                            </Text>
-                          )}
-                          <Text style={styles.muted}>
-                            Изменено {formatDecisionDate(decision.updatedAt)}
-                          </Text>
-                        </View>
-                      ) : (
-                        <Text style={styles.continueText}>Продолжить</Text>
-                      )}
-                    </Pressable>
-                  </View>
-                </Card>
-              );
-            })}
           </View>
-        )}
-      </View>
-
-      <HomeMenuModal
-        visible={homeModal === 'menu'}
-        onClose={() => setHomeModal(null)}
-        onHowItWorks={() => setHomeModal('how-it-works')}
-        onAbout={() => setHomeModal('about')}
-        onSupport={() => setHomeModal('support')}
-      />
-      <InfoModal
-        visible={homeModal === 'how-it-works'}
-        title="Как это работает"
-        buttonTitle="Понятно"
-        onClose={() => setHomeModal(null)}
-      >
-        <Text style={styles.infoText}>1. Добавь варианты.</Text>
-        <Text style={styles.infoText}>2. Добавь критерии.</Text>
-        <Text style={styles.infoText}>3. Покажи, что важнее.</Text>
-        <Text style={styles.infoText}>4. Оцени варианты.</Text>
-        <Text style={styles.infoText}>5. Получи результат.</Text>
-        <Text style={styles.infoText}>
-          DeciMatrix считает итог автоматически, но решение всегда остается за
-          тобой.
-        </Text>
-      </InfoModal>
-      <InfoModal
-        visible={homeModal === 'about'}
-        title="DeciMatrix"
-        buttonTitle="Закрыть"
-        onClose={() => setHomeModal(null)}
-      >
-        <Text style={styles.infoText}>
-          Приложение помогает сравнивать варианты и принимать решения
-          спокойнее.
-        </Text>
-        <Text style={styles.infoText}>Создано Дмитрием Гребенюком.</Text>
-        <View style={styles.gathrCard}>
-          <Text style={styles.gathrTitle}>Другой проект автора</Text>
-          <Text style={styles.gathrText}>
-            Gathr помогает организовывать встречи и события проще: с понятными
-            участниками, местом и деталями.
-          </Text>
-          <Button
-            title="Открыть Gathr"
-            variant="secondary"
-            onPress={() => {
-              void openExternalUrl(GATHR_URL);
-            }}
-          />
         </View>
-        <Text style={styles.infoText}>Версия: 1.0.0</Text>
-      </InfoModal>
-      <SupportModal
-        visible={homeModal === 'support'}
-        onClose={() => setHomeModal(null)}
-        onOpenPayPal={() => {
-          void openExternalUrl(PAYPAL_URL);
-        }}
-        onOpenUrl={(url) => {
-          void openExternalUrl(url);
-        }}
-      />
-      <ConfirmModal
-        visible={Boolean(deleteCandidate)}
-        title="Удалить решение?"
-        message="Это действие нельзя отменить."
-        confirmLabel="Удалить"
-        danger
-        onConfirm={handleDeleteDecision}
-        onCancel={() => setDeleteCandidate(null)}
-      />
-    </ScreenContainer>
-  );
-}
 
-type HomeMenuModalProps = {
-  visible: boolean;
-  onClose: () => void;
-  onHowItWorks: () => void;
-  onAbout: () => void;
-  onSupport: () => void;
-};
+        <Section id="what" title="Что такое взвешенная матрица принятия решений?">
+          <Text style={styles.sectionText}>
+            Взвешенная матрица принятия решений - это способ сравнить несколько
+            вариантов по набору критериев. Каждый критерий получает свой вес:
+            чем он важнее, тем сильнее влияет на итоговый результат. Затем каждый
+            вариант оценивается по этим критериям, а DeciMatrix рассчитывает итоговый балл.
+          </Text>
+          <View style={styles.noteCard}>
+            <Text style={styles.noteTitle}>Пример</Text>
+            <Text style={styles.sectionText}>
+              При выборе ноутбука цена может иметь вес 30%, автономность - 25%,
+              производительность - 25%, экран - 20%. Даже если один вариант дешевле,
+              он не всегда победит, если сильно проигрывает по более важным критериям.
+            </Text>
+          </View>
+          <Text style={styles.sectionText}>
+            Такой подход не принимает решение за вас, но помогает увидеть его структуру
+            и снизить влияние случайных эмоций.
+          </Text>
+        </Section>
 
-function HomeMenuModal({
-  visible,
-  onClose,
-  onHowItWorks,
-  onAbout,
-  onSupport,
-}: HomeMenuModalProps) {
-  return (
-    <Modal
-      animationType="fade"
-      transparent
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.menuSheet}>
-          <Text style={styles.menuTitle}>Меню</Text>
-          <MenuItem title="Как это работает" onPress={onHowItWorks} />
-          <MenuItem title="О приложении" onPress={onAbout} />
-          <MenuItem title="Поддержать проект" onPress={onSupport} />
-        </Pressable>
-      </Pressable>
-    </Modal>
-  );
-}
+        <Section title="Когда вариантов много, выбрать сложнее">
+          <Text style={styles.sectionText}>
+            Мы часто выбираем на ощущениях: какой ноутбук купить, куда переехать,
+            какую работу выбрать, какой проект развивать первым. Проблема в том,
+            что в голове все критерии смешиваются. DeciMatrix помогает разложить
+            выбор на понятные части и увидеть, что действительно влияет на итог.
+          </Text>
+        </Section>
 
-type InfoModalProps = {
-  visible: boolean;
-  title: string;
-  buttonTitle: string;
-  children: ReactNode;
-  onClose: () => void;
-};
+        <Section id="how" title="Как это работает">
+          <View style={styles.stepsGrid}>
+            {steps.map(([title, text], index) => (
+              <View key={title} style={styles.stepCard}>
+                <Text style={styles.stepNumber}>{index + 1}</Text>
+                <Text style={styles.cardTitle}>{title}</Text>
+                <Text style={styles.cardText}>{text}</Text>
+              </View>
+            ))}
+          </View>
+        </Section>
 
-function InfoModal({
-  visible,
-  title,
-  buttonTitle,
-  children,
-  onClose,
-}: InfoModalProps) {
-  return (
-    <Modal
-      animationType="fade"
-      transparent
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.infoSheet}>
-          <Text style={styles.infoTitle}>{title}</Text>
-          <View style={styles.infoContent}>{children}</View>
-          <Button title={buttonTitle} onPress={onClose} />
-        </Pressable>
-      </Pressable>
-    </Modal>
-  );
-}
+        <Section id="features" title="Возможности DeciMatrix">
+          <View style={styles.cardsGrid}>
+            {features.map(([title, text]) => (
+              <View key={title} style={styles.featureCard}>
+                <Text style={styles.cardTitle}>{title}</Text>
+                <Text style={styles.cardText}>{text}</Text>
+              </View>
+            ))}
+          </View>
+        </Section>
 
-type SupportModalProps = {
-  visible: boolean;
-  onClose: () => void;
-  onOpenPayPal: () => void;
-  onOpenUrl: (url: string) => void;
-};
+        <Section title="Для каких решений подходит">
+          <View style={styles.chips}>
+            {examples.map((example) => (
+              <View key={example} style={styles.chip}>
+                <Text style={styles.chipText}>{example}</Text>
+              </View>
+            ))}
+          </View>
+        </Section>
 
-function SupportModal({
-  visible,
-  onClose,
-  onOpenPayPal,
-  onOpenUrl,
-}: SupportModalProps) {
-  const [method, setMethod] = useState<SupportMethod>('paypal');
-  const copy = SUPPORT_COPY;
-
-  return (
-    <Modal
-      animationType="fade"
-      transparent
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalOverlay}>
-        <Pressable style={styles.modalBackdrop} onPress={onClose} />
-        <View style={styles.supportSheet}>
-          <ScrollView
-            style={styles.supportScroller}
-            contentContainerStyle={styles.supportScroll}
-            keyboardShouldPersistTaps="handled"
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>{copy.title}</Text>
-              <Text style={styles.infoText}>{copy.description}</Text>
-            </View>
-
-            <SegmentedControl
-              value={method}
-              options={[
-                { label: 'PayPal', value: 'paypal' },
-                { label: 'MIA QR', value: 'mia' },
-              ]}
-              onChange={setMethod}
+        <Section id="download" title="Скачать DeciMatrix">
+          <Text style={styles.sectionText}>
+            DeciMatrix доступен как веб-приложение и тестовая Android APK-версия.
+          </Text>
+          <View style={styles.actionRow}>
+            <Button title="Открыть веб-версию" onPress={openApp} />
+            <Button
+              title="Скачать APK для Android"
+              variant="secondary"
+              onPress={() => {
+                if (APK_DOWNLOAD_URL === '#') {
+                  return;
+                }
+                openExternal(APK_DOWNLOAD_URL);
+              }}
+              disabled={APK_DOWNLOAD_URL === '#'}
             />
+          </View>
+          <Text style={styles.smallText}>
+            APK-версия пока распространяется вне Google Play. Android может показать
+            предупреждение об установке из внешнего источника.
+          </Text>
+        </Section>
 
-            {method === 'paypal' ? (
-              <View style={styles.supportCard}>
-                <Text style={styles.supportMethodTitle}>PayPal</Text>
-                <Text style={styles.infoText}>{copy.paypalDescription}</Text>
-                <Button
-                  title={copy.paypalButton}
-                  variant="secondary"
-                  onPress={onOpenPayPal}
+        <Section id="support" title="Поддержать разработчика">
+          <Text style={styles.sectionText}>
+            DeciMatrix развивается как независимый проект. Поддержка помогает оплачивать
+            хостинг, AI-запросы, инструменты разработки, тестирование и новые функции.
+          </Text>
+          <View style={styles.supportTabs}>
+            <SegmentButton
+              title="PayPal"
+              active={supportMethod === 'paypal'}
+              onPress={() => setSupportMethod('paypal')}
+            />
+            <SegmentButton
+              title="MIA QR"
+              active={supportMethod === 'mia'}
+              onPress={() => setSupportMethod('mia')}
+            />
+          </View>
+          {supportMethod === 'paypal' ? (
+            <View style={styles.supportCard}>
+              <Text style={styles.cardTitle}>PayPal</Text>
+              <Text style={styles.cardText}>Подходит для международной поддержки.</Text>
+              <Button
+                title="Поддержать через PayPal"
+                variant="secondary"
+                onPress={() => openExternal(PAYPAL_URL)}
+              />
+            </View>
+          ) : (
+            <View style={styles.supportCard}>
+              <Text style={styles.cardTitle}>MIA QR</Text>
+              <Text style={styles.cardText}>
+                Для поддержки из Молдовы можно отсканировать QR-код в банковском приложении.
+              </Text>
+              <View style={styles.qrFrame}>
+                <Image
+                  source={{ uri: '/mia-qr.jpg' }}
+                  style={styles.qrImage}
+                  resizeMode="contain"
                 />
               </View>
-            ) : (
-              <View style={styles.supportCard}>
-                <Text style={styles.supportMethodTitle}>MIA QR</Text>
-                <Text style={styles.infoText}>{copy.miaDescription}</Text>
-                <View style={styles.qrFrame}>
-                  <Image
-                    source={require('../public/mia-qr.jpg')}
-                    style={styles.qrImage}
-                    resizeMode="contain"
-                  />
-                </View>
-              </View>
-            )}
-
-            <View style={styles.contactsCard}>
-              <View style={styles.contactsHeader}>
-                <Text style={styles.supportMethodTitle}>Контакты</Text>
-                <Text style={styles.infoText}>
-                  Если хочешь связаться со мной по поводу проекта,
-                  сотрудничества или обратной связи, используй один из
-                  контактов ниже.
-                </Text>
-              </View>
-              <View style={styles.contactsList}>
-                {SUPPORT_CONTACTS.map((contact) => (
-                  <ContactRow
-                    key={contact.url}
-                    icon={contact.icon}
-                    title={contact.title}
-                    value={contact.value}
-                    onPress={() => onOpenUrl(contact.url)}
-                  />
-                ))}
-              </View>
             </View>
+          )}
+        </Section>
 
-            <Button title="Закрыть" onPress={onClose} />
-          </ScrollView>
+        <Section id="contacts" title="Контакты">
+          <Text style={styles.sectionText}>
+            Если хочешь дать обратную связь, предложить идею или обсудить сотрудничество,
+            можно связаться со мной.
+          </Text>
+          <View style={styles.contactGrid}>
+            {contacts.map(([label, url]) => (
+              <Pressable
+                key={url}
+                accessibilityRole="link"
+                onPress={() => openExternal(url)}
+                style={({ pressed }) => [styles.contactLink, pressed && styles.pressed]}
+              >
+                <Text style={styles.contactLabel}>{label}</Text>
+                <Text style={styles.contactUrl}>{url.replace('https://', '')}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </Section>
+
+        <Section id="privacy" title="Конфиденциальность">
+          <Text style={styles.sectionText}>
+            Для работы AI-функций DeciMatrix может отправлять текст решения, варианты,
+            критерии и оценки на backend приложения для обработки. Не вводите чувствительные
+            персональные данные, пароли, документы, медицинскую или финансовую информацию.
+            AI-разбор является вспомогательным объяснением и не заменяет профессиональную консультацию.
+          </Text>
+        </Section>
+
+        <View style={[styles.footer, isNarrow && styles.footerNarrow]}>
+          <View>
+            <Text style={styles.footerBrand}>DeciMatrix</Text>
+            <Text style={styles.footerText}>Independent digital product by Dmitrii Grebeniuc</Text>
+          </View>
+          <View style={[styles.footerLinks, isNarrow && styles.footerLinksNarrow]}>
+            <FooterLink label="Открыть приложение" onPress={openApp} />
+            <FooterLink label="Скачать APK" onPress={() => goToHash('#download')} />
+            <FooterLink label="Поддержать" onPress={() => goToHash('#support')} />
+            <FooterLink label="Контакты" onPress={() => goToHash('#contacts')} />
+            <FooterLink label="Privacy note" onPress={() => goToHash('#privacy')} />
+          </View>
         </View>
-      </View>
-    </Modal>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-type ContactRowProps = {
-  icon: string;
+type SectionProps = {
+  id?: string;
   title: string;
-  value: string;
-  onPress: () => void;
+  children: React.ReactNode;
 };
 
-function ContactRow({ icon, title, value, onPress }: ContactRowProps) {
+function Section({ id, title, children }: SectionProps) {
   return (
-    <Pressable
-      accessibilityRole="link"
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.contactRow,
-        pressed && styles.pressed,
-      ]}
-    >
-      <View style={styles.contactIcon}>
-        <Text style={styles.contactIconText}>{icon}</Text>
-      </View>
-      <View style={styles.contactTextWrap}>
-        <Text style={styles.contactTitle} numberOfLines={1}>
-          {title}
-        </Text>
-        <Text style={styles.contactValue} numberOfLines={1}>
-          {value}
-        </Text>
-      </View>
-      <Text style={styles.contactArrow}>›</Text>
-    </Pressable>
-  );
-}
-
-type SegmentOption<T extends string> = {
-  label: string;
-  value: T;
-};
-
-type SegmentedControlProps<T extends string> = {
-  value: T;
-  options: SegmentOption<T>[];
-  onChange: (value: T) => void;
-};
-
-function SegmentedControl<T extends string>({
-  value,
-  options,
-  onChange,
-}: SegmentedControlProps<T>) {
-  return (
-    <View style={styles.segmented}>
-      {options.map((option) => {
-        const isSelected = option.value === value;
-
-        return (
-          <Pressable
-            key={option.value}
-            accessibilityRole="button"
-            onPress={() => onChange(option.value)}
-            style={[
-              styles.segment,
-              isSelected && styles.segmentSelected,
-            ]}
-          >
-            <Text
-              style={[
-                styles.segmentText,
-                isSelected && styles.segmentTextSelected,
-              ]}
-            >
-              {option.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+    <View id={id} nativeID={id} style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.sectionBody}>{children}</View>
     </View>
   );
 }
 
-type MenuItemProps = {
+type SegmentButtonProps = {
   title: string;
+  active: boolean;
   onPress: () => void;
 };
 
-function MenuItem({ title, onPress }: MenuItemProps) {
+function SegmentButton({ title, active, onPress }: SegmentButtonProps) {
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.menuItem, pressed && styles.pressed]}
+      style={[styles.segmentButton, active && styles.segmentButtonActive]}
     >
-      <Text style={styles.menuItemText}>{title}</Text>
+      <Text style={[styles.segmentButtonText, active && styles.segmentButtonTextActive]}>
+        {title}
+      </Text>
+    </Pressable>
+  );
+}
+
+type FooterLinkProps = {
+  label: string;
+  onPress: () => void;
+};
+
+function FooterLink({ label, onPress }: FooterLinkProps) {
+  return (
+    <Pressable accessibilityRole="link" onPress={onPress}>
+      <Text style={styles.footerLink}>{label}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: 24,
-    paddingBottom: 28,
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.background,
   },
-  titleBlock: {
+  page: {
+    width: '100%',
+    maxWidth: 1180,
+    alignSelf: 'center',
+    gap: 30,
+    paddingHorizontal: 22,
+    paddingTop: 18,
+    paddingBottom: 40,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 18,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: COLORS.surface,
+  },
+  headerNarrow: {
+    alignItems: 'flex-start',
+    flexDirection: 'column',
+  },
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    textDecorationLine: 'none',
+  },
+  brandText: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: COLORS.textPrimary,
+  },
+  nav: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 18,
+  },
+  navText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.textSecondary,
+  },
+  headerCta: {
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: COLORS.accent,
+  },
+  headerCtaText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.surface,
+  },
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 28,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 32,
+    padding: 26,
+    backgroundColor: COLORS.surface,
+  },
+  heroNarrow: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    padding: 18,
+  },
+  heroText: {
+    flex: 1,
+    minWidth: 0,
+    gap: 14,
+  },
+  kicker: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    overflow: 'hidden',
+    backgroundColor: COLORS.accentVeryLight,
+    color: COLORS.accentDark,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  heroTitle: {
+    fontSize: 56,
+    lineHeight: 62,
+    fontWeight: '900',
+    color: COLORS.textPrimary,
+  },
+  heroTitleNarrow: {
+    fontSize: 42,
+    lineHeight: 48,
+  },
+  heroSubtitle: {
+    maxWidth: 660,
+    fontSize: 25,
+    lineHeight: 33,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+  },
+  heroSubtitleNarrow: {
+    fontSize: 21,
+    lineHeight: 29,
+  },
+  heroDescription: {
+    maxWidth: 620,
+    fontSize: 17,
+    lineHeight: 26,
+    color: COLORS.textSecondary,
+  },
+  heroActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 4,
+  },
+  phonePreview: {
+    width: 330,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 32,
+    padding: 22,
+    backgroundColor: COLORS.background,
+  },
+  phonePreviewNarrow: {
+    width: '100%',
+  },
+  phoneHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
   },
-  tagline: {
-    fontSize: 17,
-    lineHeight: 24,
+  phoneBrand: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: COLORS.textPrimary,
+  },
+  phoneTitle: {
+    fontSize: 23,
+    fontWeight: '900',
+    color: COLORS.textPrimary,
+  },
+  progressTrack: {
+    height: 7,
+    borderRadius: 999,
+    backgroundColor: COLORS.accentLight,
+  },
+  progressFill: {
+    width: '72%',
+    height: '100%',
+    borderRadius: 999,
+    backgroundColor: COLORS.accent,
+  },
+  previewCard: {
+    gap: 8,
+    borderWidth: 1,
+    borderColor: COLORS.accentLight,
+    borderRadius: 24,
+    padding: 18,
+    backgroundColor: COLORS.accentVeryLight,
+  },
+  previewCardTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.accentDark,
+  },
+  previewWinner: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: COLORS.textPrimary,
+  },
+  previewPercent: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: COLORS.accent,
+  },
+  previewText: {
+    fontSize: 14,
+    lineHeight: 20,
     color: COLORS.textSecondary,
   },
   section: {
     gap: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 28,
+    padding: 22,
+    backgroundColor: COLORS.surface,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '900',
     color: COLORS.textPrimary,
   },
-  emptyState: {
-    alignItems: 'flex-start',
-    gap: 8,
+  sectionBody: {
+    gap: 14,
   },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-  },
-  emptyText: {
-    fontSize: 15,
-    lineHeight: 21,
+  sectionText: {
+    maxWidth: 850,
+    fontSize: 16,
+    lineHeight: 25,
     color: COLORS.textSecondary,
   },
-  list: {
-    gap: 12,
+  noteCard: {
+    gap: 6,
+    borderWidth: 1,
+    borderColor: COLORS.accentLight,
+    borderRadius: 20,
+    padding: 16,
+    backgroundColor: COLORS.accentVeryLight,
   },
-  cardContent: {
-    gap: 12,
+  noteTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: COLORS.accentDark,
   },
-  cardHeader: {
+  stepsGrid: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
+    flexWrap: 'wrap',
+    gap: 12,
   },
-  cardTitleButton: {
-    flex: 1,
+  stepCard: {
+    flexGrow: 1,
+    flexBasis: 190,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 20,
+    padding: 16,
+    backgroundColor: COLORS.background,
+  },
+  stepNumber: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    overflow: 'hidden',
+    textAlign: 'center',
+    lineHeight: 34,
+    fontSize: 16,
+    fontWeight: '900',
+    color: COLORS.accentDark,
+    backgroundColor: COLORS.accentLight,
+  },
+  cardsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  featureCard: {
+    flexGrow: 1,
+    flexBasis: 280,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 20,
+    padding: 16,
+    backgroundColor: COLORS.background,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 17,
+    fontWeight: '900',
     color: COLORS.textPrimary,
   },
-  badge: {
-    borderWidth: 1,
-    borderColor: COLORS.accentLight,
-    borderRadius: 999,
-    backgroundColor: COLORS.accentVeryLight,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: COLORS.accentDark,
-  },
-  deleteButton: {
-    width: 30,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FCA5A5',
-    borderRadius: 999,
-    backgroundColor: COLORS.surface,
-  },
-  deleteText: {
-    marginTop: -2,
-    fontSize: 22,
-    lineHeight: 24,
-    fontWeight: '700',
-    color: COLORS.danger,
-  },
-  cardMeta: {
-    gap: 4,
-  },
-  winner: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
-  muted: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  continueText: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: COLORS.accent,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    padding: 18,
-    backgroundColor: 'rgba(31, 41, 51, 0.28)',
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  menuSheet: {
-    gap: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 24,
-    padding: 16,
-    backgroundColor: COLORS.surface,
-  },
-  menuTitle: {
-    paddingHorizontal: 4,
-    paddingBottom: 4,
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-  },
-  menuItem: {
-    borderWidth: 1,
-    borderColor: COLORS.accentLight,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    backgroundColor: COLORS.accentVeryLight,
-  },
-  menuItemText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: COLORS.accentDark,
-  },
-  infoSheet: {
-    gap: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 24,
-    padding: 20,
-    backgroundColor: COLORS.surface,
-  },
-  supportSheet: {
-    width: '100%',
-    maxHeight: '96%',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 24,
-    backgroundColor: COLORS.surface,
-    overflow: 'hidden',
-  },
-  supportScroller: {
-    flexGrow: 0,
-  },
-  supportScroll: {
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 28,
-  },
-  infoTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-  },
-  infoContent: {
-    gap: 10,
-  },
-  infoText: {
+  cardText: {
     fontSize: 15,
     lineHeight: 22,
     color: COLORS.textSecondary,
   },
-  gathrCard: {
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
+  },
+  chip: {
+    borderWidth: 1,
+    borderColor: COLORS.accentLight,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    backgroundColor: COLORS.accentVeryLight,
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.accentDark,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  smallText: {
+    maxWidth: 760,
+    fontSize: 13,
+    lineHeight: 19,
+    color: COLORS.textMuted,
+  },
+  supportTabs: {
+    flexDirection: 'row',
+    maxWidth: 420,
+    gap: 6,
     borderWidth: 1,
     borderColor: COLORS.accentLight,
     borderRadius: 18,
-    padding: 16,
+    padding: 5,
     backgroundColor: COLORS.accentVeryLight,
   },
-  gathrTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-  },
-  gathrText: {
-    fontSize: 15,
-    lineHeight: 21,
-    color: COLORS.textSecondary,
-  },
-  segmented: {
-    flexDirection: 'row',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: COLORS.accentLight,
-    borderRadius: 16,
-    padding: 4,
-    backgroundColor: COLORS.accentVeryLight,
-  },
-  segment: {
+  segmentButton: {
     flex: 1,
     alignItems: 'center',
-    borderRadius: 12,
-    paddingVertical: 9,
+    borderRadius: 14,
+    paddingVertical: 10,
   },
-  segmentSelected: {
+  segmentButtonActive: {
     backgroundColor: COLORS.surface,
   },
-  segmentText: {
-    fontSize: 13,
-    fontWeight: '800',
+  segmentButtonText: {
+    fontSize: 14,
+    fontWeight: '900',
     color: COLORS.textSecondary,
   },
-  segmentTextSelected: {
+  segmentButtonTextActive: {
     color: COLORS.accentDark,
   },
   supportCard: {
-    gap: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 20,
-    padding: 12,
-    backgroundColor: COLORS.surface,
-  },
-  contactsCard: {
+    maxWidth: 520,
     gap: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 20,
-    padding: 12,
-    backgroundColor: COLORS.surface,
-  },
-  contactsHeader: {
-    gap: 6,
-  },
-  contactsList: {
-    gap: 8,
-  },
-  contactRow: {
-    minHeight: 54,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    borderWidth: 1,
-    borderColor: COLORS.accentLight,
-    borderRadius: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    backgroundColor: COLORS.accentVeryLight,
-  },
-  contactIcon: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 13,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.accentLight,
-  },
-  contactIconText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: COLORS.accentDark,
-  },
-  contactTextWrap: {
-    flex: 1,
-    minWidth: 0,
-  },
-  contactTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-  },
-  contactValue: {
-    marginTop: 2,
-    fontSize: 13,
-    color: COLORS.textSecondary,
-  },
-  contactArrow: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.accent,
-  },
-  supportMethodTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
+    borderRadius: 22,
+    padding: 16,
+    backgroundColor: COLORS.background,
   },
   qrFrame: {
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'center',
+    alignSelf: 'flex-start',
+    width: 280,
+    height: 280,
+    maxWidth: '100%',
     borderWidth: 1,
     borderColor: COLORS.border,
-    width: 244,
-    height: 244,
-    borderRadius: 18,
-    padding: 8,
+    borderRadius: 22,
+    padding: 12,
     backgroundColor: COLORS.surface,
   },
   qrImage: {
-    width: 228,
-    height: 228,
+    width: '100%',
+    height: '100%',
+  },
+  contactGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  contactLink: {
+    flexGrow: 1,
+    flexBasis: 240,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 18,
+    padding: 14,
+    backgroundColor: COLORS.background,
+  },
+  contactLabel: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: COLORS.textPrimary,
+  },
+  contactUrl: {
+    fontSize: 13,
+    color: COLORS.accentDark,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 18,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: 20,
+  },
+  footerNarrow: {
+    flexDirection: 'column',
+  },
+  footerBrand: {
+    fontSize: 19,
+    fontWeight: '900',
+    color: COLORS.textPrimary,
+  },
+  footerText: {
+    marginTop: 4,
+    fontSize: 13,
+    color: COLORS.textSecondary,
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: 14,
+  },
+  footerLinksNarrow: {
+    justifyContent: 'flex-start',
+  },
+  footerLink: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.accentDark,
   },
   pressed: {
     opacity: 0.75,

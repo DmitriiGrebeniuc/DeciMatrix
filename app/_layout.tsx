@@ -25,6 +25,7 @@ export default function RootLayout() {
     <ToastProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ title: 'Home' }} />
+        <Stack.Screen name="app" options={{ title: 'DeciMatrix App' }} />
         <Stack.Screen name="create" options={{ title: 'Create Decision' }} />
         <Stack.Screen name="options" options={{ title: 'Add Options' }} />
         <Stack.Screen name="criteria" options={{ title: 'Add Criteria' }} />

@@ -162,7 +162,7 @@ export default function ResultScreen() {
               <Text style={styles.emptyText}>
                 Вернись на главную и выбери решение из списка.
               </Text>
-              <Button title="На главную" onPress={() => router.push('/')} />
+              <Button title="На главную" onPress={() => router.push('/app')} />
             </View>
           </Card>
         ) : !isReady || !result || !winnerResult || !outcomeDetails ? (
@@ -215,7 +215,7 @@ export default function ResultScreen() {
               <Button
                 title="На главную"
                 variant="secondary"
-                onPress={() => router.push('/')}
+                onPress={() => router.push('/app')}
               />
             </View>
           </>
