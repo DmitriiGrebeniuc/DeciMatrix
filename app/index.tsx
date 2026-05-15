@@ -119,8 +119,10 @@ export default function LandingScreen() {
       >
         <View style={[styles.header, isNarrow && styles.headerNarrow]}>
           <Link href="/" style={styles.brand}>
-            <LogoMark size={isNarrow ? 34 : 38} rounded={12} />
-            <Text style={styles.brandText}>DeciMatrix</Text>
+            <View style={styles.brandInner}>
+              <LogoMark size={isNarrow ? 34 : 38} rounded={12} />
+              <Text style={styles.brandText}>DeciMatrix</Text>
+            </View>
           </Link>
 
           {!isNarrow ? (
@@ -193,7 +195,7 @@ export default function LandingScreen() {
               <Button
                 title="Скачать APK"
                 variant="secondary"
-                onPress={downloadApk}
+                onPress={() => scrollToSection('#download')}
               />
             </View>
           </View>
@@ -476,10 +478,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   brand: {
+    textDecorationLine: 'none',
+  },
+  brandInner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    textDecorationLine: 'none',
   },
   brandText: {
     fontSize: 20,
